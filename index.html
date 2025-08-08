@@ -18,16 +18,19 @@
              border:6px solid var(--orange);border-radius:18px;box-shadow:0 8px 28px rgba(2,6,23,.08)}
   h1{margin:8px 0 18px;font-size:30px}
 
-  .summary{border:3px solid var(--blue);border-radius:14px;padding:22px;
-           display:grid;grid-template-columns:1.1fr 2fr;gap:18px;background:#fff}
-  @media(max-width:980px){.summary{grid-template-columns:1fr}}
+  /* Two columns: summary (left) and the stacked panels (right) */
+  .layout{display:grid;grid-template-columns:420px 1fr;gap:18px}
+  @media(max-width:1100px){.layout{grid-template-columns:1fr}}
+
+  .summary{border:3px solid var(--blue);border-radius:14px;padding:22px;background:#fff;height:100%}
   .muted{color:var(--muted);font-size:15px;line-height:1.35}
   .big{font-size:32px;font-weight:800;margin:2px 0 10px}
 
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-  @media(max-width:980px){.grid2{grid-template-columns:1fr}}
+  /* Right side: stack Rep card over Prospect card */
+  .stack{display:grid;grid-template-rows:auto auto;gap:18px}
+
   .card{background:#fff;border:3px solid var(--border);border-radius:14px;padding:18px}
-  /* Fixed rows so time + slider rows align perfectly on both cards */
+  /* Fixed rows so time + slider rows align perfectly within each card */
   .card-grid{display:grid;grid-template-rows:auto auto 64px 56px 92px;gap:12px}
 
   .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -62,11 +65,8 @@
   .range::-moz-range-progress{height:10px;background:#0b66ff;border-radius:8px}
   .range::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#0b66ff;border:2px solid #fff}
 
-  /* Keep labels away from borders; add extra asymmetry near inner vertical borders */
-  .tick-wrap{padding-inline:64px}
-  #pTickWrap{padding-right:96px}  /* away from inner border more aggressively */
-  #rTickWrap{padding-left:96px}
-  /* unified layout under both sliders */
+  /* Symmetric padding so left/right labels line up identically */
+  .tick-wrap{padding-inline:80px}
   .ticks{
     display:flex;justify-content:space-between;align-items:flex-start;
     font-size:12px;color:#64748b;margin-top:var(--tick-gap);line-height:1;white-space:nowrap
@@ -86,15 +86,15 @@
   .listbox{position:absolute;z-index:30;background:#fff;border:2px solid #cbd5e1;border-radius:10px;max-height:260px;overflow:auto;box-shadow:0 10px 24px rgba(2,6,23,.12)}
   .option{padding:8px 12px;cursor:pointer}
   .option[aria-selected="true"], .option:hover{background:#eff6ff}
-  .kbd{font-size:11px;color:#94a3b8;margin-left:6px}
 </style>
 </head>
 <body>
   <div class="container">
     <h1>Time Zone Converter</h1>
 
-    <div class="summary">
-      <div>
+    <div class="layout">
+      <!-- LEFT: Summary stays as-is -->
+      <div class="summary">
         <div class="muted">Current difference</div>
         <div id="diff" class="big">—</div>
         <div class="muted">Drag either slider; the other mirrors exactly.</div>
@@ -105,8 +105,39 @@
         </div>
       </div>
 
-      <div class="grid2">
-        <!-- PROSPECT (left) -->
+      <!-- RIGHT: Stack Rep over Prospect -->
+      <div class="stack">
+        <!-- REP (top) -->
+        <div class="card">
+          <div class="card-grid">
+            <div class="label">Rep’s Timezone</div>
+
+            <div class="row">
+              <select id="rSelect" class="select">
+                <option value="America/Los_Angeles">Pacific</option>
+                <option value="America/Denver">Mountain</option>
+                <option value="America/Chicago" selected>Central</option>
+                <option value="America/New_York">Eastern</option>
+              </select>
+              <div></div>
+            </div>
+
+            <div class="time-row"><span id="rTime" class="time">--:--</span></div>
+
+            <div id="rTickWrap" class="tick-wrap">
+              <input id="rRange" class="range" type="range" min="0" max="1439" step="15"/>
+              <div class="ticks" id="rTicks"><span>6 AM</span><span>12 PM</span><span>6 PM</span></div>
+            </div>
+
+            <div class="row">
+              <select id="rStart" class="select"></select>
+              <select id="rEnd" class="select"></select>
+              <div class="tiny" style="grid-column:1/-1">Rep hours</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROSPECT (bottom) -->
         <div class="card">
           <div class="card-grid">
             <div class="label">Prospect’s Timezone</div>
@@ -143,7 +174,6 @@
               <div class="ticks" id="pTicks"><span>–</span><span>–</span><span>–</span></div>
             </div>
 
-            <!-- Prospect business hours -->
             <div class="row">
               <select id="pStart" class="select"></select>
               <select id="pEnd" class="select"></select>
@@ -152,39 +182,8 @@
           </div>
         </div>
 
-        <!-- REP (right) -->
-        <div class="card">
-          <div class="card-grid">
-            <div class="label">Rep’s Timezone</div>
-
-            <div class="row">
-              <select id="rSelect" class="select">
-                <option value="America/Los_Angeles">Pacific</option>
-                <option value="America/Denver">Mountain</option>
-                <option value="America/Chicago" selected>Central</option>
-                <option value="America/New_York">Eastern</option>
-              </select>
-              <div></div>
-            </div>
-
-            <div class="time-row"><span id="rTime" class="time">--:--</span></div>
-
-            <div id="rTickWrap" class="tick-wrap">
-              <input id="rRange" class="range" type="range" min="0" max="1439" step="15"/>
-              <div class="ticks" id="rTicks"><span>6 AM</span><span>12 PM</span><span>6 PM</span></div>
-            </div>
-
-            <!-- Rep business hours -->
-            <div class="row">
-              <select id="rStart" class="select"></select>
-              <select id="rEnd" class="select"></select>
-              <div class="tiny" style="grid-column:1/-1">Rep hours</div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-    </div>
+      </div><!-- /stack -->
+    </div><!-- /layout -->
   </div>
 
 <script>
@@ -192,8 +191,6 @@
   // =========================
   // Country → Region → Zone data (initial set; easy to extend)
   // =========================
-  // For multi-zone countries we expose regions; for single-zone countries we map directly.
-  // Extend by adding countries/regions below. Zones are standard IANA names.
   const COUNTRY_DATA = {
     "United States": {
       regions: {
@@ -257,8 +254,6 @@
     },
     "South Africa": { zones: ["Africa/Johannesburg"] }
   };
-
-  // Build country list from keys
   const COUNTRIES = Object.keys(COUNTRY_DATA).sort();
 
   // ========= DST-safe conversion helpers =========
@@ -339,7 +334,6 @@
   fillTimeSelect(pStart, +LS('pStart') || 9*60);
   fillTimeSelect(pEnd,   +LS('pEnd')   || 17*60);
   function updateBhLabel(){
-    const s = +rStart.value, e = +rEnd.value;
     bhLabel.textContent = `${fmt12(+pStart.value).replace(' ','')}–${fmt12(+pEnd.value).replace(' ','')}`;
     LS('rStart', rStart.value); LS('rEnd', rEnd.value);
     LS('pStart', pStart.value); LS('pEnd', pEnd.value);
@@ -471,7 +465,7 @@
   });
 
   // ===== Mirror sliders / format =====
-  const REP_TICKS = [360,720,1080]; // 6AM, 12PM, 6PM
+  const REP_TICKS = [360,720,1080];
   function setPTicks(a){
     const el=document.getElementById('pTicks');
     el.children[0].textContent=a[0]; el.children[1].textContent=a[1]; el.children[2].textContent=a[2];
@@ -515,7 +509,7 @@
     const pLabel   = `${f(pStartConv.minutes)}–${f(pEndConv.minutes)}`;
     let shiftTxt = '';
     if (pStartConv.dayOff!==0 || pEndConv.dayOff!==0){
-      shiftTxt = ` ${(pStartConv.dayOff>0||pEndConv.dayOff>0)?'(+1 day)':'(-1 day)'}`;
+      shiftTxt = ` ${(pStartConv.dayOff>0||pEndConv.dayOff>0)?'(+1 day)' : '(-1 day)'}`;
     }
     return `<span class="ov-row">Rep ${repLabel} ↔ Prospect ${pLabel}${shiftTxt}</span>`;
   }
@@ -570,7 +564,7 @@
 
   // Hard guard: never let tick labels touch borders/lines (dynamic)
   function adjustTickLabels(){
-    const SAFE = 16; // min px gap
+    const SAFE = 16; // min px gap from card edges
     [document.getElementById('rTickWrap'), document.getElementById('pTickWrap')].forEach(wrap=>{
       if (!wrap) return;
       const spans = wrap.querySelectorAll('.ticks span');
@@ -588,18 +582,25 @@
   }
   window.addEventListener('resize', () => requestAnimationFrame(adjustTickLabels));
 
-  // Init
-  // Seed prospect with UK so you see it working immediately
-  countryInput.value = 'United Kingdom';
-  populateForCountry('United Kingdom');
-
-  // Business hours label
-  updateBhLabel();
-
-  // Start at noon mirrored
-  state.repMins = 12*60;
-  rRange.value = pRange.value = state.repMins;
-  render();
+  // Init — seed prospect with UK so flow is visible; set noon
+  (function init(){
+    // Business hours label
+    updateBhLabel();
+    // Prospect default
+    countryInput.value = 'United Kingdom';
+    // Use the direct zones path for UK
+    (function populateUK(){
+      const entry = COUNTRY_DATA['United Kingdom'];
+      const zs = entry?.zones || [];
+      zoneSelect.innerHTML = zs.map(z=>`<option value="${z}">${z}</option>`).join('');
+      zoneSelect.disabled = false;
+      zoneSelect.value = zs[0] || '';
+      state.pTz = zoneSelect.value || null;
+    })();
+    state.repMins = 12*60;
+    rRange.value = pRange.value = state.repMins;
+    render();
+  })();
 })();
 </script>
 </body>
