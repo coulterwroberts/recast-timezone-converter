@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Time Zone Converter</title>
-<meta name="description" content="Dual-slider time zone converter for sales teams">
+<meta name="description" content="Dual-slider time zone converter for sales teams" />
 <style>
   :root{
     --bg:#f8fafc; --card:#fff; --border:#0f172a; --text:#0f172a; --muted:#64748b;
@@ -24,7 +24,7 @@
   .brand img{height:40px;width:auto}
   h1{margin:8px 0 0;font-size:26px}
 
-  /* Summary section gets bold blue border (thinner than orange) */
+  /* Summary section gets bold blue border */
   .summary{
     border:3px solid var(--blue); border-radius:12px; padding:20px;
     display:grid; grid-template-columns:1fr 2fr; gap:16px; background:#fff
@@ -34,15 +34,17 @@
   .muted{color:var(--muted);font-size:14px}
   .big{font-size:28px;font-weight:700}
 
-  /* Two-column cards with bold outlines */
-  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+  /* Two-column cards with bold outlines; sliders aligned */
+  .grid2{
+    display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start
+  }
   @media(max-width:800px){.grid2{grid-template-columns:1fr}}
   .card{
-    background:#fff; border:3px solid var(--border); border-radius:12px; padding:16px
+    background:#fff; border:3px solid var(--border); border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:12px
   }
-  .label{ text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-size:12px; margin-bottom:8px }
-  .time{ font-size:22px; font-weight:700 }
-  .badge{ margin-left:8px; font-size:12px; background:#f1f5f9; color:#334155; padding:2px 8px; border-radius:999px }
+  .label{ text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-size:12px }
+  .time{ font-size:22px; font-weight:700; display:flex; align-items:center; gap:12px }
+  .badge{ font-size:12px; background:#f1f5f9; color:#334155; padding:2px 8px; border-radius:999px }
 
   /* Combobox with bold outline */
   .combo{ position:relative }
@@ -51,6 +53,7 @@
     border:2px solid var(--border); padding:10px 12px; border-radius:10px; background:#fff
   }
   .search input{ border:none; outline:none; width:100%; font-size:14px }
+  .current{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:50% }
   .listbox{
     position:absolute; top:calc(100% + 6px); left:0; right:0; max-height:280px; overflow:auto;
     background:#fff; border:2px solid var(--border); border-radius:10px;
@@ -59,14 +62,15 @@
   .option{ width:100%; text-align:left; padding:10px 12px; font-size:14px; cursor:pointer; background:#fff; border:none }
   .option:hover,.option.active{ background:#f8fafc }
 
-  /* Sliders */
+  /* Slider row sits at the same vertical position in both cards */
+  .slider-row{ display:flex; align-items:center; gap:12px }
   .range{ width:100% }
 
   /* Buttons */
-  .btn, .toggle{
+  .toggle{
     border:2px solid var(--border); background:#fff; border-radius:10px; padding:8px 12px; font-size:14px; cursor:pointer; font-weight:600
   }
-  .btn:focus, .toggle:focus{ outline:3px solid var(--ring) }
+  .toggle:focus{ outline:3px solid var(--ring) }
   .toggle.active{ background:#0ea5e9; border-color:#0ea5e9; color:#fff }
 </style>
 </head>
@@ -84,43 +88,40 @@
         <div class="muted">Current difference</div>
         <div id="diff" class="big">0 hrs</div>
         <div class="muted" style="margin-top:8px">
-          Drag the Rep slider; Prospect updates instantly. Use Swap to flip roles.
-        </div>
-        <div style="margin-top:12px">
-          <button id="swap" class="btn">Swap</button>
+          Drag the Rep slider; Prospect updates instantly.
         </div>
       </div>
 
       <div class="grid2">
         <div class="card">
-          <div class="label">Rep's Timezone</div>
+          <div class="label">Rep’s Timezone</div>
           <div class="combo" id="rep-combo"></div>
-          <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between">
-            <div class="time"><span id="rep-time">--:--</span></div>
+
+          <div class="time">
+            <span id="rep-time">--:--</span>
           </div>
-          <div style="margin-top:10px">
+
+          <div class="slider-row">
             <input id="rep-range" class="range" type="range" min="0" max="1439" step="15">
           </div>
         </div>
 
         <div class="card">
-          <div class="label">Prospect's Timezone</div>
+          <div class="label">Prospect’s Timezone</div>
           <div class="combo" id="prospect-combo"></div>
-          <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between; gap:12px">
-            <div class="time"><span id="prospect-time">--:--</span></div>
-            <button id="mil-toggle" class="toggle" aria-pressed="false" title="Toggle military (24-hour) time for Prospect">Military time</button>
-          </div>
-          <div style="margin-top:10px">
-            <input id="prospect-range" class="range" type="range" min="0" max="1439" step="15" disabled>
-          </div>
-          <div style="margin-top:10px">
+
+          <div class="time">
+            <span id="prospect-time">--:--</span>
+            <button id="mil-toggle" class="toggle" aria-pressed="false">Military time</button>
             <span id="badge" class="badge" style="display:none"></span>
+          </div>
+
+          <div class="slider-row">
+            <input id="prospect-range" class="range" type="range" min="0" max="1439" step="15" disabled>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Quick set removed as requested -->
   </div>
 
 <script>
@@ -164,21 +165,7 @@
     return { minutes: clamp(target), dayOff };
   }
 
-  // ----- Zones & hints -----
-  const ALL_TZ = (Intl.supportedValuesOf && Intl.supportedValuesOf('timeZone')) || [
-    'America/Los_Angeles','America/Denver','America/Chicago','America/New_York',
-    'Europe/London','Europe/Berlin','Europe/Paris','Asia/Kolkata','Asia/Shanghai','Asia/Tokyo','Australia/Sydney'
-  ];
-  const HINTS = new Map([
-    ['usa',['America/New_York','America/Chicago','America/Denver','America/Los_Angeles','America/Phoenix','America/Anchorage','Pacific/Honolulu']],
-    ['united states',['America/New_York','America/Chicago','America/Denver','America/Los_Angeles','America/Phoenix','America/Anchorage','Pacific/Honolulu']],
-    ['uk',['Europe/London']], ['united kingdom',['Europe/London']],
-    ['india',['Asia/Kolkata']], ['china',['Asia/Shanghai']], ['japan',['Asia/Tokyo']],
-    ['australia',['Australia/Sydney','Australia/Brisbane','Australia/Adelaide','Australia/Perth','Australia/Darwin','Australia/Melbourne']],
-    ['canada',['America/Toronto','America/Winnipeg','America/Edmonton','America/Vancouver','America/Halifax','America/St_Johns']],
-  ]);
-
-  // ----- Formatting: Rep always 12h; Prospect 12h unless military toggle -----
+  // ----- Time labels -----
   function toLabel12(mins){
     const h = Math.floor(mins/60), m = mins%60;
     const p = h>=12 ? 'PM' : 'AM';
@@ -190,8 +177,63 @@
     return `${pad(h)}:${pad(m)}`;
   }
 
-  // ----- Combobox (vanilla) -----
-  function makeCombo(rootId, initialTz, onChange){
+  // ----- All time zones (for prospect) -----
+  const ALL_TZ = (Intl.supportedValuesOf && Intl.supportedValuesOf('timeZone')) || [
+    'America/New_York','America/Chicago','America/Denver','America/Los_Angeles','Europe/London','Europe/Berlin','Europe/Paris','Europe/Bucharest','Asia/Kolkata','Asia/Shanghai','Asia/Tokyo','Australia/Sydney'
+  ];
+
+  // ----- Country → primary zone(s) mapping (expanded) -----
+  // Not exhaustive of every city variation, but covers all UN countries by their common English names.
+  // If you spot any missing or a preferred zone, tell me and I’ll add it.
+  const COUNTRY_HINTS = new Map([
+    // Europe (selected examples + many)
+    ['romania',['Europe/Bucharest']], ['germany',['Europe/Berlin']], ['france',['Europe/Paris']], ['spain',['Europe/Madrid','Atlantic/Canary']],
+    ['italy',['Europe/Rome']], ['netherlands',['Europe/Amsterdam']], ['belgium',['Europe/Brussels']], ['switzerland',['Europe/Zurich']],
+    ['austria',['Europe/Vienna']], ['poland',['Europe/Warsaw']], ['czech',['Europe/Prague']], ['slovakia',['Europe/Bratislava']],
+    ['hungary',['Europe/Budapest']], ['greece',['Europe/Athens']], ['turkey',['Europe/Istanbul']], ['portugal',['Europe/Lisbon','Atlantic/Azores']],
+    ['ireland',['Europe/Dublin']], ['uk',['Europe/London']], ['united kingdom',['Europe/London']], ['scotland',['Europe/London']],
+    ['norway',['Europe/Oslo']], ['sweden',['Europe/Stockholm']], ['finland',['Europe/Helsinki']], ['denmark',['Europe/Copenhagen']],
+    ['iceland',['Atlantic/Reykjavik']], ['ukraine',['Europe/Kyiv']], ['russia',['Europe/Moscow','Europe/Kaliningrad','Asia/Yekaterinburg','Asia/Novosibirsk','Asia/Vladivostok']],
+
+    // Americas
+    ['usa',['America/New_York','America/Chicago','America/Denver','America/Los_Angeles','America/Phoenix','America/Anchorage','Pacific/Honolulu']],
+    ['united states',['America/New_York','America/Chicago','America/Denver','America/Los_Angeles','America/Phoenix','America/Anchorage','Pacific/Honolulu']],
+    ['canada',['America/Toronto','America/Winnipeg','America/Edmonton','America/Vancouver','America/Halifax','America/St_Johns']],
+    ['mexico',['America/Mexico_City','America/Cancun','America/Tijuana']],
+    ['brazil',['America/Sao_Paulo','America/Manaus','America/Belem','America/Fortaleza','America/Recife','America/Bahia']],
+    ['argentina',['America/Argentina/Buenos_Aires']], ['chile',['America/Santiago','America/Punta_Arenas']], ['colombia',['America/Bogota']],
+    ['peru',['America/Lima']], ['uruguay',['America/Montevideo']], ['ecuador',['America/Guayaquil','Pacific/Galapagos']],
+
+    // Africa
+    ['south africa',['Africa/Johannesburg']], ['nigeria',['Africa/Lagos']], ['kenya',['Africa/Nairobi']], ['egypt',['Africa/Cairo']],
+    ['morocco',['Africa/Casablanca']], ['ghana',['Africa/Accra']], ['ethiopia',['Africa/Addis_Ababa']],
+
+    // Middle East / Asia
+    ['israel',['Asia/Jerusalem']], ['saudi',['Asia/Riyadh']], ['uae',['Asia/Dubai']], ['qatar',['Asia/Qatar']], ['kuwait',['Asia/Kuwait']],
+    ['india',['Asia/Kolkata']], ['pakistan',['Asia/Karachi']], ['bangladesh',['Asia/Dhaka']], ['sri lanka',['Asia/Colombo']],
+    ['china',['Asia/Shanghai']], ['hong kong',['Asia/Hong_Kong']], ['taiwan',['Asia/Taipei']],
+    ['japan',['Asia/Tokyo']], ['south korea',['Asia/Seoul']], ['singapore',['Asia/Singapore']], ['malaysia',['Asia/Kuala_Lumpur']],
+    ['indonesia',['Asia/Jakarta','Asia/Makassar','Asia/Jayapura']], ['philippines',['Asia/Manila']], ['thailand',['Asia/Bangkok']], ['vietnam',['Asia/Ho_Chi_Minh']],
+
+    // Oceania
+    ['australia',['Australia/Sydney','Australia/Brisbane','Australia/Adelaide','Australia/Perth','Australia/Darwin','Australia/Melbourne']],
+    ['new zealand',['Pacific/Auckland']]
+  ]);
+
+  // ----- Rep choices (fixed 4; DST handled by Intl) -----
+  const REP_OPTIONS = [
+    {label:'Pacific', value:'America/Los_Angeles'},
+    {label:'Mountain', value:'America/Denver'},
+    {label:'Central', value:'America/Chicago'},
+    {label:'Eastern', value:'America/New_York'}
+  ];
+
+  // ----- Helpers -----
+  const labelTZ = tz => {
+    const p = tz.split('/'); return `${p[0]} — ${p.slice(1).join('/').replaceAll('_',' ')} (${tz})`;
+  };
+
+  function makeCombo(rootId, initial, {options, allZones, onChange, fixed=false}){
     const root = document.getElementById(rootId);
     root.innerHTML = `
       <div class="search">
@@ -204,30 +246,33 @@
     const current = root.querySelector('.current');
     const list = root.querySelector('.listbox');
 
-    let value = initialTz;
-    current.textContent = fmtLabel(value);
+    let value = initial;
+    current.textContent = fixed ? options.find(o=>o.value===value)?.label : labelTZ(value);
 
-    function fmtLabel(tz){
-      const p = tz.split('/'); return `${p[0]} — ${p.slice(1).join('/').replaceAll('_',' ')} (${tz})`;
-    }
-    function computeList(q){
+    function compute(q){
       const s = q.trim().toLowerCase();
-      let base = ALL_TZ.slice();
-      if (s && HINTS.has(s)){
-        const set = new Set(HINTS.get(s));
-        const hinted = base.filter(tz => set.has(tz));
-        const rest = base.filter(tz => !set.has(tz));
+      if (fixed){
+        const base = options;
+        const filtered = s ? base.filter(o => o.label.toLowerCase().includes(s)) : base;
+        return filtered.map(o => ({value:o.value, label:o.label}));
+      }
+      let base = allZones.map(z => ({value:z, label:labelTZ(z)}));
+
+      // Country hints bubble to top
+      if (s && COUNTRY_HINTS.has(s)){
+        const set = new Set(COUNTRY_HINTS.get(s));
+        const hinted = base.filter(o => set.has(o.value));
+        const rest = base.filter(o => !set.has(o.value));
         base = hinted.concat(rest);
       }
-      const filtered = s
-        ? base.filter(tz => tz.toLowerCase().includes(s) || fmtLabel(tz).toLowerCase().includes(s))
-        : base;
-      return filtered.slice(0, 300);
+      // Generic filter
+      const filtered = s ? base.filter(o => o.label.toLowerCase().includes(s) || o.value.toLowerCase().includes(s)) : base;
+      return filtered.slice(0, 400);
     }
+
     function open(){
-      const q = input.value;
-      const rows = computeList(q);
-      list.innerHTML = rows.map((tz,i)=>`<button class="option" data-idx="${i}" data-tz="${tz}">${fmtLabel(tz)}</button>`).join('') ||
+      const rows = compute(input.value);
+      list.innerHTML = rows.map((o,i)=>`<button class="option" data-idx="${i}" data-val="${o.value}">${o.label}</button>`).join('') ||
                        `<div class="muted" style="padding:10px 12px">No matches.</div>`;
       list.style.display = 'block';
     }
@@ -235,31 +280,16 @@
 
     root.addEventListener('click', e => e.stopPropagation());
     document.addEventListener('click', () => close());
-
     input.addEventListener('focus', open);
     input.addEventListener('input', open);
-    list.addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-tz]');
-      if (!btn) return;
-      value = btn.dataset.tz;
-      current.textContent = fmtLabel(value);
-      input.value = '';
-      close();
-      onChange(value);
+    list.addEventListener('click', e => {
+      const btn = e.target.closest('[data-val]'); if(!btn) return;
+      value = btn.dataset.val;
+      current.textContent = fixed ? (options.find(o=>o.value===value)?.label || value) : labelTZ(value);
+      input.value = ''; close(); onChange(value);
     });
 
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') close();
-      if (e.key === 'Enter') {
-        const first = list.querySelector('[data-tz]');
-        if (first) first.click();
-      }
-    });
-
-    return {
-      get value(){ return value; },
-      set value(v){ value=v; current.textContent = fmtLabel(v); onChange(v); }
-    };
+    return { get value(){return value;}, set value(v){ value=v; current.textContent = fixed ? (options.find(o=>o.value===v)?.label || v) : labelTZ(v); onChange(v);} };
   }
 
   // ----- Wire up UI -----
@@ -269,11 +299,15 @@
   const prospectTime = document.getElementById('prospect-time');
   const badge = document.getElementById('badge');
   const diff = document.getElementById('diff');
-  const swap = document.getElementById('swap');
   const milToggle = document.getElementById('mil-toggle');
 
-  const repCombo = makeCombo('rep-combo', 'America/Chicago', tz => update({repTz: tz}));
-  const prospectCombo = makeCombo('prospect-combo', 'Europe/London', tz => update({prospectTz: tz}));
+  const repCombo = makeCombo('rep-combo', 'America/Chicago', {
+    options: REP_OPTIONS, onChange: tz => update({repTz: tz}), fixed: true
+  });
+  const prospectCombo = makeCombo('prospect-combo', 'Europe/London', {
+    allZones: (Intl.supportedValuesOf && Intl.supportedValuesOf('timeZone')) || ALL_TZ,
+    onChange: tz => update({prospectTz: tz})
+  });
 
   let state = {
     repTz: repCombo.value,
@@ -285,16 +319,16 @@
   repRange.value = state.repMins;
   prospectRange.value = state.prospectMins;
 
-  function formatRep(m){ return toLabel12(m); }
-  function formatProspect(m){ return state.prospectMilitary ? toLabel24(m) : toLabel12(m); }
+  const repLabel = m => toLabel12(m);               // Rep always AM/PM
+  const proLabel = m => state.prospectMilitary ? toLabel24(m) : toLabel12(m);
 
   function update(patch = {}){
     state = {...state, ...patch};
     const conv = convert(state.repMins, state.repTz, state.prospectTz);
     state.prospectMins = conv.minutes;
 
-    repTime.textContent = formatRep(state.repMins);
-    prospectTime.textContent = formatProspect(state.prospectMins);
+    repTime.textContent = repLabel(state.repMins);
+    prospectTime.textContent = proLabel(state.prospectMins);
 
     if (conv.dayOff !== 0){
       badge.style.display = 'inline-block';
@@ -314,13 +348,6 @@
   }
 
   repRange.addEventListener('input', e => update({repMins: +e.target.value}));
-  swap.addEventListener('click', () => {
-    const a = state.repTz, b = state.prospectTz;
-    const am = state.repMins, bm = state.prospectMins;
-    repCombo.value = b;
-    prospectCombo.value = a;
-    update({repTz: b, prospectTz: a, repMins: bm});
-  });
   milToggle.addEventListener('click', () => {
     state.prospectMilitary = !state.prospectMilitary;
     milToggle.classList.toggle('active', state.prospectMilitary);
