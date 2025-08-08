@@ -1,3 +1,18 @@
+Heck yes—let’s clean it up exactly how you asked. I made these changes:
+
+* **Removed** the global 24-hour toggle.
+* **Rep always shows AM/PM.**
+* **Prospect** has its own **“Military time”** toggle (24-hour) right on that card.
+* **Placeholders changed** to “Input Country”.
+* **Thick orange border** around the whole converter.
+* **Bold, thinner blue border** around the “Current difference + cards” section.
+* **Bolder outlines** on the input boxes/cards.
+* **Removed** the Quick Set section.
+* Titles updated to **“Rep’s Timezone”** and **“Prospect’s Timezone.”**
+
+Paste this over your current `index.html` (replace everything):
+
+```html
 <!doctype html>
 <html lang="en">
 <head>
@@ -6,41 +21,68 @@
 <title>Time Zone Converter</title>
 <meta name="description" content="Dual-slider time zone converter for sales teams">
 <style>
-  :root{--bg:#f8fafc;--card:#fff;--border:#e5e7eb;--text:#0f172a;--muted:#64748b;--ring:#bae6fd}
-  *{box-sizing:border-box}html,body{height:100%;margin:0}
+  :root{
+    --bg:#f8fafc; --card:#fff; --border:#0f172a; --text:#0f172a; --muted:#64748b;
+    --ring:#bae6fd; --orange:#f97316; --blue:#2563eb;
+  }
+  *{box-sizing:border-box} html,body{height:100%;margin:0}
   body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,Noto Sans,"Apple Color Emoji","Segoe UI Emoji";
        background:linear-gradient(#fff,var(--bg));color:var(--text)}
-  .container{max-width:1000px;margin:32px auto;padding:24px;background:var(--card);border:1px solid var(--border);
-             border-radius:16px;box-shadow:0 4px 16px rgba(2,6,23,.04)}
+  /* Thick orange border around whole app */
+  .container{
+    max-width:1000px;margin:32px auto;padding:24px;background:var(--card);
+    border:6px solid var(--orange); border-radius:16px;
+    box-shadow:0 6px 24px rgba(2,6,23,.08)
+  }
   .header{display:flex;align-items:center;justify-content:space-between;gap:16px}
   .brand{display:flex;align-items:center;gap:12px}
   .brand img{height:40px;width:auto}
   h1{margin:8px 0 0;font-size:26px}
-  .controls{display:flex;align-items:center;gap:12px}
-  .switch{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
-  .switch input{width:42px;height:24px}
-  .swap{border:1px solid var(--border);background:#fff;border-radius:8px;padding:8px 12px;cursor:pointer}
-  .swap:focus{outline:2px solid var(--ring)}
-  .summary{border:2px solid var(--border);border-radius:12px;padding:20px;display:grid;grid-template-columns:1fr 2fr;gap:16px}
+
+  /* Summary section gets bold blue border (thinner than orange) */
+  .summary{
+    border:3px solid var(--blue); border-radius:12px; padding:20px;
+    display:grid; grid-template-columns:1fr 2fr; gap:16px; background:#fff
+  }
   @media(max-width:800px){.summary{grid-template-columns:1fr}}
-  .muted{color:var(--muted);font-size:14px}.big{font-size:28px;font-weight:600}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:800px){.grid2{grid-template-columns:1fr}}
-  .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px}
-  .label{text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-size:12px;margin-bottom:8px}
-  .time{font-size:20px;font-weight:600}
-  .badge{margin-left:8px;font-size:12px;background:#f1f5f9;color:#334155;padding:2px 8px;border-radius:999px}
-  .combo{position:relative}
-  .search{display:flex;align-items:center;gap:8px;border:1px solid var(--border);padding:8px 10px;border-radius:8px;background:#fff}
-  .search input{border:none;outline:none;width:100%;font-size:14px}
-  .listbox{position:absolute;top:calc(100% + 6px);left:0;right:0;max-height:280px;overflow:auto;background:#fff;border:1px solid var(--border);
-           border-radius:8px;box-shadow:0 8px 24px rgba(2,6,23,.08);z-index:40}
-  .option{width:100%;text-align:left;padding:8px 10px;font-size:14px;cursor:pointer;background:#fff;border:none}
-  .option:hover,.option.active{background:#f8fafc}
-  .range{width:100%}
-  .quick{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-  .btn{border:1px solid var(--border);background:#fff;border-radius:8px;padding:6px 10px;font-size:14px;cursor:pointer}
-  .btn:focus{outline:2px solid var(--ring)}
-  .footer-note{color:var(--muted);font-size:12px;margin-top:8px}
+
+  .muted{color:var(--muted);font-size:14px}
+  .big{font-size:28px;font-weight:700}
+
+  /* Two-column cards with bold outlines */
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+  @media(max-width:800px){.grid2{grid-template-columns:1fr}}
+  .card{
+    background:#fff; border:3px solid var(--border); border-radius:12px; padding:16px
+  }
+  .label{ text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-size:12px; margin-bottom:8px }
+  .time{ font-size:22px; font-weight:700 }
+  .badge{ margin-left:8px; font-size:12px; background:#f1f5f9; color:#334155; padding:2px 8px; border-radius:999px }
+
+  /* Combobox with bold outline */
+  .combo{ position:relative }
+  .search{
+    display:flex; align-items:center; gap:8px;
+    border:2px solid var(--border); padding:10px 12px; border-radius:10px; background:#fff
+  }
+  .search input{ border:none; outline:none; width:100%; font-size:14px }
+  .listbox{
+    position:absolute; top:calc(100% + 6px); left:0; right:0; max-height:280px; overflow:auto;
+    background:#fff; border:2px solid var(--border); border-radius:10px;
+    box-shadow:0 12px 32px rgba(2,6,23,.12); z-index:40
+  }
+  .option{ width:100%; text-align:left; padding:10px 12px; font-size:14px; cursor:pointer; background:#fff; border:none }
+  .option:hover,.option.active{ background:#f8fafc }
+
+  /* Sliders */
+  .range{ width:100% }
+
+  /* Buttons */
+  .btn, .toggle{
+    border:2px solid var(--border); background:#fff; border-radius:10px; padding:8px 12px; font-size:14px; cursor:pointer; font-weight:600
+  }
+  .btn:focus, .toggle:focus{ outline:3px solid var(--ring) }
+  .toggle.active{ background:#0ea5e9; border-color:#0ea5e9; color:#fff }
 </style>
 </head>
 <body>
@@ -50,16 +92,6 @@
         <img src="./logo.png" alt="Recast Software" onerror="this.style.display='none'">
         <h1>Time Zone Converter</h1>
       </div>
-      <div class="controls">
-        <label class="switch"><span>24-hour</span>
-          <input id="toggle-24h" type="checkbox">
-          <span>12-hour*</span>
-        </label>
-        <button id="swap" class="swap">Swap</button>
-      </div>
-    </div>
-    <div class="muted" style="margin-top:-4px">
-      *When 12-hour is selected, zones that commonly use 24-hour still display in 24-hour locally.
     </div>
 
     <div class="summary" style="margin-top:16px">
@@ -69,11 +101,14 @@
         <div class="muted" style="margin-top:8px">
           Drag the Rep slider; Prospect updates instantly. Use Swap to flip roles.
         </div>
+        <div style="margin-top:12px">
+          <button id="swap" class="btn">Swap</button>
+        </div>
       </div>
 
       <div class="grid2">
         <div class="card">
-          <div class="label">Rep</div>
+          <div class="label">Rep's Timezone</div>
           <div class="combo" id="rep-combo"></div>
           <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between">
             <div class="time"><span id="rep-time">--:--</span></div>
@@ -84,32 +119,28 @@
         </div>
 
         <div class="card">
-          <div class="label">Prospect</div>
+          <div class="label">Prospect's Timezone</div>
           <div class="combo" id="prospect-combo"></div>
-          <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between">
+          <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between; gap:12px">
             <div class="time"><span id="prospect-time">--:--</span></div>
-            <span id="badge" class="badge" style="display:none"></span>
+            <button id="mil-toggle" class="toggle" aria-pressed="false" title="Toggle military (24-hour) time for Prospect">Military time</button>
           </div>
           <div style="margin-top:10px">
             <input id="prospect-range" class="range" type="range" min="0" max="1439" step="15" disabled>
+          </div>
+          <div style="margin-top:10px">
+            <span id="badge" class="badge" style="display:none"></span>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="quick">
-      <span class="muted">Quick set:</span>
-      <span id="quick"></span>
-      <button class="btn" id="now">Now</button>
-    </div>
-
-    <div class="footer-note">
-      Day badge shows if converted time lands on a different calendar day in the prospect’s time zone.
-    </div>
+    <!-- Quick set removed as requested -->
   </div>
 
 <script>
 (() => {
+  // ----- Core time utils (DST-safe via Intl) -----
   const BASE_DATE = new Date();
   const clamp = n => ((n % 1440) + 1440) % 1440;
   const pad = n => String(n).padStart(2,'0');
@@ -148,22 +179,11 @@
     return { minutes: clamp(target), dayOff };
   }
 
+  // ----- Zones & hints -----
   const ALL_TZ = (Intl.supportedValuesOf && Intl.supportedValuesOf('timeZone')) || [
     'America/Los_Angeles','America/Denver','America/Chicago','America/New_York',
     'Europe/London','Europe/Berlin','Europe/Paris','Asia/Kolkata','Asia/Shanghai','Asia/Tokyo','Australia/Sydney'
   ];
-  const Z24 = new Set(['Europe/London','Europe/Berlin','Europe/Paris','Europe/Madrid','Europe/Rome','Europe/Amsterdam','Europe/Oslo','Europe/Stockholm','Europe/Helsinki','Asia/Kolkata','Asia/Shanghai','Asia/Tokyo','Australia/Sydney','America/Sao_Paulo','Asia/Dubai','Africa/Johannesburg']);
-  const prefers24 = tz => Z24.has(tz);
-
-  function label(mins, use12, tz){
-    const h = Math.floor(mins/60), m = mins%60;
-    const force24 = (!use12) || prefers24(tz);
-    if (force24) return `${pad(h)}:${pad(m)}`;
-    const p = h>=12 ? 'PM' : 'AM';
-    const h12 = ((h+11)%12)+1;
-    return `${h12}:${pad(m)} ${p}`;
-  }
-
   const HINTS = new Map([
     ['usa',['America/New_York','America/Chicago','America/Denver','America/Los_Angeles','America/Phoenix','America/Anchorage','Pacific/Honolulu']],
     ['united states',['America/New_York','America/Chicago','America/Denver','America/Los_Angeles','America/Phoenix','America/Anchorage','Pacific/Honolulu']],
@@ -173,11 +193,24 @@
     ['canada',['America/Toronto','America/Winnipeg','America/Edmonton','America/Vancouver','America/Halifax','America/St_Johns']],
   ]);
 
+  // ----- Formatting: Rep always 12h; Prospect 12h unless military toggle -----
+  function toLabel12(mins){
+    const h = Math.floor(mins/60), m = mins%60;
+    const p = h>=12 ? 'PM' : 'AM';
+    const h12 = ((h+11)%12)+1;
+    return `${h12}:${pad(m)} ${p}`;
+  }
+  function toLabel24(mins){
+    const h = Math.floor(mins/60), m = mins%60;
+    return `${pad(h)}:${pad(m)}`;
+  }
+
+  // ----- Combobox (vanilla) -----
   function makeCombo(rootId, initialTz, onChange){
     const root = document.getElementById(rootId);
     root.innerHTML = `
       <div class="search">
-        <input type="text" placeholder="Type a country or time zone..." aria-label="Search timezone">
+        <input type="text" placeholder="Input Country" aria-label="Search timezone">
         <div class="muted current"></div>
       </div>
       <div class="listbox" style="display:none"></div>
@@ -192,7 +225,6 @@
     function fmtLabel(tz){
       const p = tz.split('/'); return `${p[0]} — ${p.slice(1).join('/').replaceAll('_',' ')} (${tz})`;
     }
-
     function computeList(q){
       const s = q.trim().toLowerCase();
       let base = ALL_TZ.slice();
@@ -207,12 +239,11 @@
         : base;
       return filtered.slice(0, 300);
     }
-
     function open(){
       const q = input.value;
       const rows = computeList(q);
       list.innerHTML = rows.map((tz,i)=>`<button class="option" data-idx="${i}" data-tz="${tz}">${fmtLabel(tz)}</button>`).join('') ||
-                       `<div class="muted" style="padding:8px 10px">No matches.</div>`;
+                       `<div class="muted" style="padding:10px 12px">No matches.</div>`;
       list.style.display = 'block';
     }
     function close(){ list.style.display = 'none'; }
@@ -246,16 +277,15 @@
     };
   }
 
+  // ----- Wire up UI -----
   const repRange = document.getElementById('rep-range');
   const prospectRange = document.getElementById('prospect-range');
   const repTime = document.getElementById('rep-time');
   const prospectTime = document.getElementById('prospect-time');
   const badge = document.getElementById('badge');
   const diff = document.getElementById('diff');
-  const toggle24 = document.getElementById('toggle-24h');
   const swap = document.getElementById('swap');
-  const quick = document.getElementById('quick');
-  const nowBtn = document.getElementById('now');
+  const milToggle = document.getElementById('mil-toggle');
 
   const repCombo = makeCombo('rep-combo', 'America/Chicago', tz => update({repTz: tz}));
   const prospectCombo = makeCombo('prospect-combo', 'Europe/London', tz => update({prospectTz: tz}));
@@ -265,23 +295,21 @@
     prospectTz: prospectCombo.value,
     repMins: 9*60,
     prospectMins: convert(9*60, repCombo.value, prospectCombo.value).minutes,
+    prospectMilitary: false
   };
   repRange.value = state.repMins;
   prospectRange.value = state.prospectMins;
-  toggle24.checked = true; // default to 24h display
 
-  function labelFor(m, tz){
-    const use12 = !toggle24.checked;
-    return label(m, use12, tz);
-  }
+  function formatRep(m){ return toLabel12(m); }
+  function formatProspect(m){ return state.prospectMilitary ? toLabel24(m) : toLabel12(m); }
 
   function update(patch = {}){
     state = {...state, ...patch};
     const conv = convert(state.repMins, state.repTz, state.prospectTz);
     state.prospectMins = conv.minutes;
 
-    repTime.textContent = labelFor(state.repMins, state.repTz);
-    prospectTime.textContent = labelFor(state.prospectMins, state.prospectTz);
+    repTime.textContent = formatRep(state.repMins);
+    prospectTime.textContent = formatProspect(state.prospectMins);
 
     if (conv.dayOff !== 0){
       badge.style.display = 'inline-block';
@@ -301,7 +329,6 @@
   }
 
   repRange.addEventListener('input', e => update({repMins: +e.target.value}));
-  toggle24.addEventListener('change', () => update({}));
   swap.addEventListener('click', () => {
     const a = state.repTz, b = state.prospectTz;
     const am = state.repMins, bm = state.prospectMins;
@@ -309,16 +336,11 @@
     prospectCombo.value = a;
     update({repTz: b, prospectTz: a, repMins: bm});
   });
-
-  [8,9,10,11,12,13,14,15,16].forEach(h => {
-    const btn = document.createElement('button');
-    btn.className = 'btn';
-    btn.textContent = `${h}:00 Rep`;
-    btn.addEventListener('click', () => update({repMins: h*60}));
-    quick.appendChild(btn);
-  });
-  nowBtn.addEventListener('click', () => {
-    const n = new Date(); update({repMins: n.getHours()*60 + n.getMinutes()});
+  milToggle.addEventListener('click', () => {
+    state.prospectMilitary = !state.prospectMilitary;
+    milToggle.classList.toggle('active', state.prospectMilitary);
+    milToggle.setAttribute('aria-pressed', String(state.prospectMilitary));
+    update({});
   });
 
   update({});
@@ -326,3 +348,6 @@
 </script>
 </body>
 </html>
+```
+
+If anything still looks off after you paste this, drop me the live link again and tell me exactly what’s not matching. I’ll tweak the CSS or behavior immediately.
