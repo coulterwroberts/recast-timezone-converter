@@ -46,7 +46,7 @@
       linear-gradient(#0f172a,#0f172a);
     background-size:2px 16px,2px 16px,2px 16px;
     background-repeat:no-repeat;
-    background-position:calc(25% + 0px) 50%, 50% 50%, calc(75% - 0px) 50%;
+    background-position:25% 50%, 50% 50%, 75% 50%;
   }
   .range::-webkit-slider-runnable-track{height:10px;border-radius:8px;background:transparent}
   .range::-webkit-slider-thumb{
@@ -59,26 +59,11 @@
 
   .tick-wrap{padding-inline:14px} /* keep labels away from card borders */
   .ticks{display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-top:6px}
-  .ticks span{width:0}
-  .ticks span:first-child{transform:translateX(-1px)}
+  /* prevent label overlap with the vertical tick line / border */
+  .ticks span{width:0;position:relative}
+  .ticks span:first-child{transform:translateX(-8px)}
   .ticks span:nth-child(2){transform:translateX(0)}
-  .ticks span:last-child{transform:translateX(1px)}
-
-  /* Prospect combobox dropdown */
-  .combo{position:relative}
-  .dropdown{
-    position:absolute;left:0;right:0;top:calc(100% + 6px);
-    background:#fff;border:2px solid var(--border);border-radius:12px;
-    max-height:300px;overflow:auto;box-shadow:0 14px 34px rgba(2,6,23,.12);
-    z-index:50;display:none
-  }
-  .row{padding:10px 14px;cursor:pointer;font-size:15px}
-  .row:hover,.row.active{background:#f8fafc}
-  .hint{font-size:12px;color:#64748b;padding:6px 14px}
-  .toggle{border:2px solid var(--border);background:#fff;border-radius:12px;padding:9px 14px;font-size:14px;cursor:pointer;font-weight:700}
-  .toggle:disabled{opacity:.45;cursor:not-allowed}
-  .toggle.active{background:#0ea5e9;border-color:#0ea5e9;color:#fff}
-  .toggle:focus,.input:focus,.select:focus{outline:3px solid var(--ring)}
+  .ticks span:last-child{transform:translateX(8px)}
 
   .overlap{margin-top:14px;padding:10px 12px;border:2px dashed #cbd5e1;border-radius:10px;background:#fafcff}
   .ov-title{font-weight:700;margin-bottom:6px}
@@ -106,15 +91,11 @@
         <div class="card">
           <div class="card-grid">
             <div class="label">Prospect’s Timezone</div>
-
-            <div class="combo">
-              <input id="pInput" class="input" placeholder="Type Country or City…" autocomplete="off" aria-label="Type to search country/city/time zone"/>
-              <div id="pDrop" class="dropdown"></div>
-            </div>
+            <select id="pSelect" class="select"></select>
 
             <div class="time-row">
               <span id="pTime" class="time">--:--</span>
-              <button id="milBtn" class="toggle" aria-pressed="false" disabled>Military time</button>
+              <button id="milBtn" class="select" style="width:auto;padding:8px 12px;font-weight:700">Military time</button>
               <span id="badge" class="badge" style="display:none"></span>
             </div>
 
@@ -129,17 +110,17 @@
         <div class="card">
           <div class="card-grid">
             <div class="label">Rep’s Timezone</div>
-            <select id="repSelect" class="select" aria-label="Select timezone">
+            <select id="rSelect" class="select">
               <option value="America/Los_Angeles">Pacific</option>
               <option value="America/Denver">Mountain</option>
               <option value="America/Chicago" selected>Central</option>
               <option value="America/New_York">Eastern</option>
             </select>
 
-            <div class="time-row"><span id="repTime" class="time">--:--</span></div>
+            <div class="time-row"><span id="rTime" class="time">--:--</span></div>
 
             <div class="tick-wrap">
-              <input id="repRange" class="range" type="range" min="0" max="1439" step="15"/>
+              <input id="rRange" class="range" type="range" min="0" max="1439" step="15"/>
               <div class="ticks"><span>6 AM</span><span>12 PM</span><span>6 PM</span></div>
             </div>
           </div>
@@ -150,15 +131,17 @@
 
 <script>
 (() => {
-  // ===== Helpers (DST-safe) =====
+  // ===== Robust DST-safe conversion helpers =====
   const BASE = new Date();
   const pad = n => (n<10?'0':'')+n;
   const clamp = n => ((n%1440)+1440)%1440;
 
   function parts(d, tz){
-    const f = new Intl.DateTimeFormat('en-US',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit',
-      hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
-    const m = {}; f.formatToParts(d).forEach(p=>m[p.type]=p.value);
+    const f = new Intl.DateTimeFormat('en-US',{
+      timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit',
+      hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false
+    });
+    const m={}; f.formatToParts(d).forEach(p=>m[p.type]=p.value);
     return {year:+m.year,month:+m.month,day:+m.day,hour:+m.hour,minute:+m.minute,second:+m.second};
   }
   function offsetMin(tz,d){
@@ -176,69 +159,47 @@
     const fp=parts(BASE,fromTz);
     const utc=localToUTC({year:fp.year,month:fp.month,day:fp.day,hour:Math.floor(mins/60),minute:mins%60},fromTz);
     const tp=parts(utc,toTz);
-    const atFromMid=parts(localToUTC({year:fp.year,month:fp.month,day:fp.day,hour:0,minute:0},fromTz),toTz);
-    const dayOff=Math.round((Date.UTC(tp.year,tp.month-1,tp.day)-Date.UTC(atFromMid.year,atFromMid.month-1,atFromMid.day))/(24*3600*1000));
+    const fromMidUTC=localToUTC({year:fp.year,month:fp.month,day:fp.day,hour:0,minute:0},fromTz);
+    const toAtFromMid=parts(fromMidUTC,toTz);
+    const dayOff=Math.round((Date.UTC(tp.year,tp.month-1,tp.day)-Date.UTC(toAtFromMid.year,toAtFromMid.month-1,toAtFromMid.day))/(24*3600*1000));
     return {minutes:clamp(tp.hour*60+tp.minute), dayOff};
   }
   const fmt12 = m => { const h=Math.floor(m/60),mm=m%60,ap=h>=12?'PM':'AM',h12=((h+11)%12)+1; return h12+':'+pad(mm)+' '+ap; };
   const fmt24 = m => pad(Math.floor(m/60))+':'+pad(m%60);
-  const labelTZ = tz => { const p=tz.split('/'); return p[0]+' — '+p.slice(1).join('/').replace(/_/g,' ')+' ('+tz+')'; };
-
-  // ===== Data for search =====
-  function allTZ(){
-    try{ if (Intl.supportedValuesOf) return Intl.supportedValuesOf('timeZone'); }catch(e){}
-    return ['Europe/London','Europe/Rome','Europe/Bucharest','America/New_York','America/Chicago','America/Denver','America/Los_Angeles'];
-  }
-  const ALL_TZ = allTZ();
-
-  // Countries → primary zone (trimmed demo list; extend anytime)
-  const COUNTRY_TZ = new Map([
-    // Europe
-    ['Romania','Europe/Bucharest'], ['Italy','Europe/Rome'], ['United Kingdom','Europe/London'],
-    ['France','Europe/Paris'], ['Germany','Europe/Berlin'], ['Spain','Europe/Madrid'], ['Portugal','Europe/Lisbon'],
-    ['Ireland','Europe/Dublin'], ['Poland','Europe/Warsaw'], ['Greece','Europe/Athens'],
-    // Americas
-    ['United States','America/New_York'], ['Canada','America/Toronto'], ['Mexico','America/Mexico_City'],
-    // Asia/Oceania
-    ['India','Asia/Kolkata'], ['China','Asia/Shanghai'], ['Japan','Asia/Tokyo'], ['Australia','Australia/Sydney']
-  ]);
-
-  const CITY_HINTS = new Map([
-    ['london','Europe/London'], ['rome','Europe/Rome'], ['bucharest','Europe/Bucharest'], ['paris','Europe/Paris'],
-    ['new york','America/New_York'], ['chicago','America/Chicago'], ['denver','America/Denver'], ['los angeles','America/Los_Angeles'],
-    ['toronto','America/Toronto']
-  ]);
-
-  // Build options list: countries + zones + city aliases
-  const SEARCH_ROWS = [];
-  COUNTRY_TZ.forEach((tz,c)=>SEARCH_ROWS.push({label:`${c} — ${labelTZ(tz)}`, tz, key:c.toLowerCase()}));
-  ALL_TZ.forEach(tz=>SEARCH_ROWS.push({label:labelTZ(tz), tz, key:tz.toLowerCase()}));
-  CITY_HINTS.forEach((tz,city)=>SEARCH_ROWS.push({label:`${city[0].toUpperCase()+city.slice(1)} — ${labelTZ(tz)}`, tz, key:city}));
 
   // ===== Elements =====
-  const repSelect = document.getElementById('repSelect');
-  const repRange  = document.getElementById('repRange');
-  const repTime   = document.getElementById('repTime');
-
-  const pInput = document.getElementById('pInput');
-  const pDrop  = document.getElementById('pDrop');
-  const pTime  = document.getElementById('pTime');
-  const pRange = document.getElementById('pRange');
-  const milBtn = document.getElementById('milBtn');
-  const badge  = document.getElementById('badge');
-  const diffEl = document.getElementById('diff');
+  const rSelect = document.getElementById('rSelect');
+  const pSelect = document.getElementById('pSelect');
+  const rRange  = document.getElementById('rRange');
+  const pRange  = document.getElementById('pRange');
+  const rTime   = document.getElementById('rTime');
+  const pTime   = document.getElementById('pTime');
+  const badge   = document.getElementById('badge');
+  const diffEl  = document.getElementById('diff');
   const overlapEl = document.getElementById('overlap');
+  const milBtn  = document.getElementById('milBtn');
 
-  // ===== State (start at 12:00 PM; sliders mirror both ways) =====
+  // Fill Prospect select with all IANA zones (or leave as-is if not supported)
+  try{
+    if (Intl.supportedValuesOf){
+      const all = Intl.supportedValuesOf('timeZone');
+      pSelect.innerHTML = all.map(z=>`<option value="${z}">${z}</option>`).join('');
+      pSelect.value = 'Europe/London';
+    } else {
+      pSelect.innerHTML = `<option value="Europe/London">Europe/London</option><option value="Europe/Bucharest">Europe/Bucharest</option>`;
+    }
+  }catch(_){}
+
+  // ===== State =====
   let state = {
-    repTz: repSelect.value,
-    repMins: 720,              // start centered at 12 PM
-    pTz: null,
+    repTz: rSelect.value,
+    repMins: 720,   // start at 12:00 PM
+    pTz: pSelect.value,
     pMins: null,
-    p24: false
+    use24: false
   };
 
-  const REP_TICKS = [360,720,1080]; // 6 AM, 12 PM, 6 PM
+  const REP_TICKS = [360,720,1080]; // 6AM, 12PM, 6PM
   function setPTicks(a){
     const el=document.getElementById('pTicks');
     el.children[0].textContent=a[0]; el.children[1].textContent=a[1]; el.children[2].textContent=a[2];
@@ -247,136 +208,87 @@
     if (!state.pTz){ setPTicks(['–','–','–']); return; }
     const labels = REP_TICKS.map(mins=>{
       const m = convert(mins, state.repTz, state.pTz).minutes;
-      return state.p24 ? fmt24(m) : fmt12(m);
+      return state.use24 ? fmt24(m) : fmt12(m);
     });
     setPTicks(labels);
   }
 
+  // Overlap (9–5 local)
+  const W_START = 9*60, W_END = 17*60;
+  function inWin(m){ return m>=W_START && m<W_END; }
+  function computeOverlap(){
+    if (!state.pTz) return [];
+    const segs=[]; let cur=null;
+    for (let m=0; m<1440; m+=15){
+      const p = convert(m, state.repTz, state.pTz);
+      const ok = inWin(m) && inWin(p.minutes);
+      if (ok){
+        if (!cur) cur={rs:m, ps:p.minutes, dss:p.dayOff, re:null, pe:null, dse:null};
+        cur.re=m+15; cur.pe=p.minutes; cur.dse=p.dayOff;
+      } else if (cur){ segs.push(cur); cur=null; }
+    }
+    if (cur) segs.push(cur);
+    return segs;
+  }
+  function fmtOverlap(seg){
+    const l = state.use24 ? fmt24 : fmt12;
+    const rep = `${l(seg.rs)}–${l(seg.re)}`;
+    const pro = `${l(seg.ps)}–${l(seg.pe)}${(seg.dss||seg.dse)?' ('+((seg.dss>0||seg.dse>0)?'+':'')+'1 day)':''}`;
+    return `Rep ${rep} ↔ Prospect ${pro}`;
+  }
+  function updateOverlap(){
+    const segs = computeOverlap();
+    if (!state.pTz){ overlapEl.textContent='Pick a prospect time zone to see overlaps.'; return; }
+    if (!segs.length){ overlapEl.textContent='No overlap between 9–5 windows today.'; return; }
+    overlapEl.innerHTML = segs.map(s=>`<div class="ov-row">${fmtOverlap(s)}</div>`).join('');
+  }
+
   function render(){
-    // time readouts
-    repTime.textContent = fmt12(state.repMins);
-    // mirror thumbs: both sliders show same position
-    repRange.value = state.repMins;
-    pRange.value   = state.repMins;
+    // Mirror the thumbs (both ways)
+    rRange.value = state.repMins;
+    pRange.value = state.repMins;
 
-    const active = !!state.pTz;
-    milBtn.disabled = !active;
-
-    if (active){
+    // Times
+    rTime.textContent = fmt12(state.repMins);
+    if (state.pTz){
       const conv = convert(state.repMins, state.repTz, state.pTz);
       state.pMins = conv.minutes;
-      pTime.textContent = state.p24 ? fmt24(state.pMins) : fmt12(state.pMins);
+      pTime.textContent = state.use24 ? fmt24(state.pMins) : fmt12(state.pMins);
 
+      // day shift badge
       if (conv.dayOff !== 0){ badge.style.display='inline-block'; badge.textContent=(conv.dayOff>0?'+':'')+conv.dayOff+' day'; }
       else badge.style.display='none';
 
-      let d = (state.pMins - state.repMins)/60; d = Math.round(d*100)/100; if (d>12) d-=24; if (d<-12) d+=24;
-      diffEl.textContent = (d>0?'+':'') + d + ' hrs';
+      // difference (normalize to [-12,12])
+      let d = (state.pMins - state.repMins)/60;
+      d = Math.round(d*100)/100; if (d>12) d-=24; if (d<-12) d+=24;
+      diffEl.innerHTML = `<div class="muted">Current difference</div><div class="big">${(d>0?'+':'')}${d} hrs</div>`;
 
       updateProspectTickLabels();
       updateOverlap();
     } else {
-      pTime.textContent = '--:--';
-      badge.style.display='none';
-      diffEl.textContent = '—';
-      setPTicks(['–','–','–']);
-      overlapEl.textContent = 'Pick a prospect time zone to see overlaps.';
+      pTime.textContent = '--:--'; badge.style.display='none';
+      diffEl.innerHTML = `<div class="muted">Current difference</div><div class="big">—</div>`;
+      setPTicks(['–','–','–']); overlapEl.textContent='Pick a prospect time zone to see overlaps.';
     }
   }
 
-  // ===== Prospect dropdown =====
-  function rowsFor(q){
-    const s=(q||'').trim().toLowerCase();
-    if(!s) return [];
-    return SEARCH_ROWS.filter(r => r.key.includes(s) || r.label.toLowerCase().includes(s)).slice(0,400);
-  }
-  function openDrop(q){
-    const rows = rowsFor(q);
-    if (!rows.length){ pDrop.innerHTML='<div class="hint">No matches. Try a country or city.</div>'; pDrop.style.display='block'; return; }
-    pDrop.innerHTML = rows.map(r=>`<div class="row" data-tz="${r.tz}">${r.label}</div>`).join('');
-    pDrop.style.display='block';
-  }
-  function closeDrop(){ pDrop.style.display='none'; }
-  pInput.addEventListener('input', ()=>openDrop(pInput.value));
-  pInput.addEventListener('focus', ()=>openDrop(pInput.value));
-  pInput.addEventListener('keydown', e=>{
-    if (e.key==='Enter'){
-      const first = pDrop.querySelector('.row'); if(first){ first.click(); e.preventDefault(); }
-    } else if (e.key==='Escape'){ closeDrop(); }
-  });
-  document.addEventListener('click', e=>{ if(!pDrop.contains(e.target) && e.target!==pInput) closeDrop(); });
-  pDrop.addEventListener('click', e=>{
-    const row=e.target.closest('.row'); if(!row) return;
-    state.pTz = row.getAttribute('data-tz');
-    pInput.value = row.textContent; closeDrop();
-    render();
-  });
+  // Events (mirror BOTH ways)
+  rSelect.addEventListener('change', e=>{ state.repTz = e.target.value; updateProspectTickLabels(); updateOverlap(); render(); });
+  pSelect.addEventListener('change', e=>{ state.pTz   = e.target.value; updateProspectTickLabels(); updateOverlap(); render(); });
 
-  // ===== Events (mirror both ways) =====
-  repSelect.addEventListener('change', e=>{ state.repTz = e.target.value; updateProspectTickLabels(); updateOverlap(); render(); });
-  repRange .addEventListener('input', e=>{ state.repMins = +e.target.value; render(); });
-  pRange   .addEventListener('input', e=>{ state.repMins = +e.target.value; render(); }); // dragging left OR right keeps them equal
+  rRange.addEventListener('input', e=>{ state.repMins = +e.target.value; render(); });
+  pRange.addEventListener('input', e=>{ state.repMins = +e.target.value; render(); });
+
   milBtn.addEventListener('click', ()=>{
-    if(!state.pTz) return;
-    state.p24 = !state.p24;
-    milBtn.classList.toggle('active', state.p24);
-    milBtn.setAttribute('aria-pressed', String(state.p24));
+    state.use24 = !state.use24;
+    milBtn.classList.toggle('active', state.use24);
+    milBtn.setAttribute('aria-pressed', String(state.use24));
     updateProspectTickLabels(); updateOverlap(); render();
   });
 
-  // ===== Overlapping business hours (9–5 local on both sides) =====
-  const WORK_START = 9*60, WORK_END = 17*60; // minutes
-
-  function inWindow(mins, start, end){ return mins>=start && mins<end; }
-
-  // Return array of segments {repStart, repEnd, pStart, pEnd, pDayShiftStart, pDayShiftEnd}
-  function computeOverlap(repTz, pTz){
-    if (!pTz) return [];
-    const segments = [];
-    let cur = null;
-
-    for (let m=0; m<1440; m+=15){ // sample every 15 minutes across Rep day
-      const p = convert(m, repTz, pTz);
-      const repOk = inWindow(m, WORK_START, WORK_END);
-      const pOk   = inWindow(p.minutes, WORK_START, WORK_END);
-
-      if (repOk && pOk){
-        if (!cur){
-          cur = {repStart:m, pStart:p.minutes, pDayShiftStart:p.dayOff};
-        }
-        cur.repEnd = m + 15; // end is exclusive
-        cur.pEnd   = p.minutes;
-        cur.pDayShiftEnd = p.dayOff;
-      } else if (cur){
-        segments.push(cur); cur=null;
-      }
-    }
-    if (cur) segments.push(cur);
-    return segments;
-  }
-
-  function formatRangeLabel(repStart, repEnd, pStart, pEnd, dsStart, dsEnd){
-    const repLabel = fmt12(repStart) + '–' + fmt12(repEnd);
-    const pLabel24 = fmt24(pStart) + '–' + fmt24(pEnd);
-    const pLabel12 = fmt12(pStart) + '–' + fmt12(pEnd);
-    const ds = (dsStart||dsEnd) ? ` ${dsStart!==0||dsEnd!==0 ? '('+(dsStart>0||dsEnd>0?'+':'')+'1 day)' : ''}` : '';
-    return {
-      l12: `Rep ${repLabel} ↔ Prospect ${pLabel12}${ds}`,
-      l24: `Rep ${repLabel} ↔ Prospect ${pLabel24}${ds}`
-    };
-  }
-
-  function updateOverlap(){
-    if (!state.pTz){ overlapEl.textContent='Pick a prospect time zone to see overlaps.'; return; }
-    const segs = computeOverlap(state.repTz, state.pTz);
-    if (!segs.length){ overlapEl.textContent='No overlap between 9–5 windows today.'; return; }
-    const lines = segs.map(s => formatRangeLabel(s.repStart,s.repEnd,s.pStart,s.pEnd,s.pDayShiftStart,s.pDayShiftEnd));
-    overlapEl.innerHTML = lines.map(l => `<div class="ov-row">${state.p24 ? l.l24 : l.l12}</div>`).join('');
-  }
-
-  // ===== Init =====
-  // Center both sliders at noon from the start
-  repRange.value = 720; pRange.value = 720;
+  // Init at noon
+  rRange.value = pRange.value = state.repMins;
   render();
 })();
 </script>
