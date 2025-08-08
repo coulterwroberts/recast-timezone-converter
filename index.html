@@ -19,14 +19,14 @@
   .summary{border:3px solid var(--blue);border-radius:14px;padding:22px;
            display:grid;grid-template-columns:1.1fr 2fr;gap:18px;background:#fff}
   @media(max-width:980px){.summary{grid-template-columns:1fr}}
-  .muted{color:var(--muted);font-size:15px}
-  .big{font-size:32px;font-weight:800}
+  .muted{color:var(--muted);font-size:15px;line-height:1.35}
+  .big{font-size:32px;font-weight:800;margin:2px 0 10px}
 
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
   @media(max-width:980px){.grid2{grid-template-columns:1fr}}
   .card{background:#fff;border:3px solid var(--border);border-radius:14px;padding:18px}
   /* Fixed row heights so time + slider rows are perfectly aligned */
-  .card-grid{display:grid;grid-template-rows:auto 64px 56px 56px;gap:14px}
+  .card-grid{display:grid;grid-template-rows:auto 64px 56px 72px;gap:14px}
 
   .label{text-transform:uppercase;letter-spacing:.06em;color:#64748b;font-size:12px}
   .time-row{display:flex;align-items:center;gap:12px}
@@ -46,7 +46,7 @@
       linear-gradient(#0f172a,#0f172a);
     background-size:2px 16px,2px 16px,2px 16px;
     background-repeat:no-repeat;
-    background-position:25% 50%,50% 50%,75% 50%;
+    background-position:calc(25% + 0px) 50%, 50% 50%, calc(75% - 0px) 50%;
   }
   .range::-webkit-slider-runnable-track{height:10px;border-radius:8px;background:transparent}
   .range::-webkit-slider-thumb{
@@ -56,10 +56,11 @@
   .range::-moz-range-track{height:10px;border-radius:8px;background:transparent}
   .range::-moz-range-progress{height:10px;background:#0b66ff;border-radius:8px}
   .range::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#0b66ff;border:2px solid #fff}
-  .range.mirror{pointer-events:none}
 
+  .tick-wrap{padding-inline:14px} /* keep labels away from card borders */
   .ticks{display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-top:6px}
-  .ticks span{width:0;transform:translateX(-1px)}
+  .ticks span{width:0}
+  .ticks span:first-child{transform:translateX(-1px)}
   .ticks span:nth-child(2){transform:translateX(0)}
   .ticks span:last-child{transform:translateX(1px)}
 
@@ -78,6 +79,10 @@
   .toggle:disabled{opacity:.45;cursor:not-allowed}
   .toggle.active{background:#0ea5e9;border-color:#0ea5e9;color:#fff}
   .toggle:focus,.input:focus,.select:focus{outline:3px solid var(--ring)}
+
+  .overlap{margin-top:14px;padding:10px 12px;border:2px dashed #cbd5e1;border-radius:10px;background:#fafcff}
+  .ov-title{font-weight:700;margin-bottom:6px}
+  .ov-row{font-size:14px;color:#0f172a;margin:2px 0}
 </style>
 </head>
 <body>
@@ -88,7 +93,12 @@
       <div>
         <div class="muted">Current difference</div>
         <div id="diff" class="big">—</div>
-        <div class="muted" style="margin-top:8px">Drag the left slider; the right one mirrors exactly.</div>
+        <div class="muted">Drag either slider; the other mirrors exactly.</div>
+
+        <div class="overlap">
+          <div class="ov-title">Overlapping business hours (9–5 local)</div>
+          <div id="overlap">Pick a prospect time zone to see overlaps.</div>
+        </div>
       </div>
 
       <div class="grid2">
@@ -108,8 +118,8 @@
               <span id="badge" class="badge" style="display:none"></span>
             </div>
 
-            <div>
-              <input id="pRange" class="range mirror" type="range" min="0" max="1439" step="15" disabled/>
+            <div class="tick-wrap">
+              <input id="pRange" class="range" type="range" min="0" max="1439" step="15"/>
               <div class="ticks" id="pTicks"><span>–</span><span>–</span><span>–</span></div>
             </div>
           </div>
@@ -128,7 +138,7 @@
 
             <div class="time-row"><span id="repTime" class="time">--:--</span></div>
 
-            <div>
+            <div class="tick-wrap">
               <input id="repRange" class="range" type="range" min="0" max="1439" step="15"/>
               <div class="ticks"><span>6 AM</span><span>12 PM</span><span>6 PM</span></div>
             </div>
@@ -181,32 +191,22 @@
   }
   const ALL_TZ = allTZ();
 
-  // Countries → primary zone (extendable)
+  // Countries → primary zone (trimmed demo list; extend anytime)
   const COUNTRY_TZ = new Map([
-    // Europe (includes Romania/Italy/UK etc.)
+    // Europe
     ['Romania','Europe/Bucharest'], ['Italy','Europe/Rome'], ['United Kingdom','Europe/London'],
     ['France','Europe/Paris'], ['Germany','Europe/Berlin'], ['Spain','Europe/Madrid'], ['Portugal','Europe/Lisbon'],
-    ['Ireland','Europe/Dublin'], ['Poland','Europe/Warsaw'], ['Greece','Europe/Athens'], ['Netherlands','Europe/Amsterdam'],
-    ['Belgium','Europe/Brussels'], ['Sweden','Europe/Stockholm'], ['Norway','Europe/Oslo'], ['Finland','Europe/Helsinki'],
-    ['Denmark','Europe/Copenhagen'], ['Switzerland','Europe/Zurich'], ['Austria','Europe/Vienna'], ['Czech Republic','Europe/Prague'],
-    ['Hungary','Europe/Budapest'], ['Ukraine','Europe/Kyiv'], ['Turkey','Europe/Istanbul'],
+    ['Ireland','Europe/Dublin'], ['Poland','Europe/Warsaw'], ['Greece','Europe/Athens'],
     // Americas
     ['United States','America/New_York'], ['Canada','America/Toronto'], ['Mexico','America/Mexico_City'],
-    ['Brazil','America/Sao_Paulo'], ['Argentina','America/Argentina/Buenos_Aires'], ['Chile','America/Santiago'],
-    ['Colombia','America/Bogota'], ['Peru','America/Lima'],
-    // Africa
-    ['South Africa','Africa/Johannesburg'], ['Egypt','Africa/Cairo'], ['Nigeria','Africa/Lagos'], ['Kenya','Africa/Nairobi'],
     // Asia/Oceania
-    ['India','Asia/Kolkata'], ['China','Asia/Shanghai'], ['Japan','Asia/Tokyo'], ['South Korea','Asia/Seoul'],
-    ['Singapore','Asia/Singapore'], ['Hong Kong','Asia/Hong_Kong'], ['Taiwan','Asia/Taipei'], ['Thailand','Asia/Bangkok'],
-    ['United Arab Emirates','Asia/Dubai'], ['Israel','Asia/Jerusalem'], ['Saudi Arabia','Asia/Riyadh'],
-    ['Australia','Australia/Sydney'], ['New Zealand','Pacific/Auckland']
+    ['India','Asia/Kolkata'], ['China','Asia/Shanghai'], ['Japan','Asia/Tokyo'], ['Australia','Australia/Sydney']
   ]);
 
   const CITY_HINTS = new Map([
-    ['london','Europe/London'], ['rome','Europe/Rome'], ['bucharest','Europe/Bucharest'], ['paris','Europe/Paris'], ['berlin','Europe/Berlin'],
+    ['london','Europe/London'], ['rome','Europe/Rome'], ['bucharest','Europe/Bucharest'], ['paris','Europe/Paris'],
     ['new york','America/New_York'], ['chicago','America/Chicago'], ['denver','America/Denver'], ['los angeles','America/Los_Angeles'],
-    ['phoenix','America/Phoenix'], ['toronto','America/Toronto'], ['vancouver','America/Vancouver']
+    ['toronto','America/Toronto']
   ]);
 
   // Build options list: countries + zones + city aliases
@@ -227,8 +227,9 @@
   const milBtn = document.getElementById('milBtn');
   const badge  = document.getElementById('badge');
   const diffEl = document.getElementById('diff');
+  const overlapEl = document.getElementById('overlap');
 
-  // ===== State (start at 12:00 PM; sliders mirror) =====
+  // ===== State (start at 12:00 PM; sliders mirror both ways) =====
   let state = {
     repTz: repSelect.value,
     repMins: 720,              // start centered at 12 PM
@@ -251,14 +252,12 @@
     setPTicks(labels);
   }
 
-  // ===== Render =====
   function render(){
-    // Rep time + slider
+    // time readouts
     repTime.textContent = fmt12(state.repMins);
+    // mirror thumbs: both sliders show same position
     repRange.value = state.repMins;
-
-    // Mirror the thumb position for Prospect (visual only)
-    pRange.value = state.repMins;
+    pRange.value   = state.repMins;
 
     const active = !!state.pTz;
     milBtn.disabled = !active;
@@ -275,11 +274,13 @@
       diffEl.textContent = (d>0?'+':'') + d + ' hrs';
 
       updateProspectTickLabels();
+      updateOverlap();
     } else {
       pTime.textContent = '--:--';
       badge.style.display='none';
       diffEl.textContent = '—';
       setPTicks(['–','–','–']);
+      overlapEl.textContent = 'Pick a prospect time zone to see overlaps.';
     }
   }
 
@@ -311,18 +312,71 @@
     render();
   });
 
-  // ===== Events =====
-  repSelect.addEventListener('change', e=>{ state.repTz = e.target.value; updateProspectTickLabels(); render(); });
+  // ===== Events (mirror both ways) =====
+  repSelect.addEventListener('change', e=>{ state.repTz = e.target.value; updateProspectTickLabels(); updateOverlap(); render(); });
   repRange .addEventListener('input', e=>{ state.repMins = +e.target.value; render(); });
+  pRange   .addEventListener('input', e=>{ state.repMins = +e.target.value; render(); }); // dragging left OR right keeps them equal
   milBtn.addEventListener('click', ()=>{
     if(!state.pTz) return;
     state.p24 = !state.p24;
     milBtn.classList.toggle('active', state.p24);
     milBtn.setAttribute('aria-pressed', String(state.p24));
-    updateProspectTickLabels(); render();
+    updateProspectTickLabels(); updateOverlap(); render();
   });
 
+  // ===== Overlapping business hours (9–5 local on both sides) =====
+  const WORK_START = 9*60, WORK_END = 17*60; // minutes
+
+  function inWindow(mins, start, end){ return mins>=start && mins<end; }
+
+  // Return array of segments {repStart, repEnd, pStart, pEnd, pDayShiftStart, pDayShiftEnd}
+  function computeOverlap(repTz, pTz){
+    if (!pTz) return [];
+    const segments = [];
+    let cur = null;
+
+    for (let m=0; m<1440; m+=15){ // sample every 15 minutes across Rep day
+      const p = convert(m, repTz, pTz);
+      const repOk = inWindow(m, WORK_START, WORK_END);
+      const pOk   = inWindow(p.minutes, WORK_START, WORK_END);
+
+      if (repOk && pOk){
+        if (!cur){
+          cur = {repStart:m, pStart:p.minutes, pDayShiftStart:p.dayOff};
+        }
+        cur.repEnd = m + 15; // end is exclusive
+        cur.pEnd   = p.minutes;
+        cur.pDayShiftEnd = p.dayOff;
+      } else if (cur){
+        segments.push(cur); cur=null;
+      }
+    }
+    if (cur) segments.push(cur);
+    return segments;
+  }
+
+  function formatRangeLabel(repStart, repEnd, pStart, pEnd, dsStart, dsEnd){
+    const repLabel = fmt12(repStart) + '–' + fmt12(repEnd);
+    const pLabel24 = fmt24(pStart) + '–' + fmt24(pEnd);
+    const pLabel12 = fmt12(pStart) + '–' + fmt12(pEnd);
+    const ds = (dsStart||dsEnd) ? ` ${dsStart!==0||dsEnd!==0 ? '('+(dsStart>0||dsEnd>0?'+':'')+'1 day)' : ''}` : '';
+    return {
+      l12: `Rep ${repLabel} ↔ Prospect ${pLabel12}${ds}`,
+      l24: `Rep ${repLabel} ↔ Prospect ${pLabel24}${ds}`
+    };
+  }
+
+  function updateOverlap(){
+    if (!state.pTz){ overlapEl.textContent='Pick a prospect time zone to see overlaps.'; return; }
+    const segs = computeOverlap(state.repTz, state.pTz);
+    if (!segs.length){ overlapEl.textContent='No overlap between 9–5 windows today.'; return; }
+    const lines = segs.map(s => formatRangeLabel(s.repStart,s.repEnd,s.pStart,s.pEnd,s.pDayShiftStart,s.pDayShiftEnd));
+    overlapEl.innerHTML = lines.map(l => `<div class="ov-row">${state.p24 ? l.l24 : l.l12}</div>`).join('');
+  }
+
   // ===== Init =====
+  // Center both sliders at noon from the start
+  repRange.value = 720; pRange.value = 720;
   render();
 })();
 </script>
