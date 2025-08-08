@@ -1,16 +1,3 @@
-Thanks for the brutal honesty. You’re right — if it isn’t responsive to typing and the right slider doesn’t move, it’s not good enough.
-
-I rebuilt the page so it’s **reliably dynamic**:
-
-* **Prospect search now matches countries *and* cities/zones** (e.g., “London”, “Bucharest”, “Rome”).
-* The **suggestion list auto-opens** as you type; **Enter** selects the **top match**.
-* **Nothing is shown** in the Prospect card until you actually pick one.
-* After selection, the **left slider immediately drives the right time/slider** (with DST-safe math).
-* I removed fragile bits (`replaceAll`, etc.), added fallbacks if `Intl.supportedValuesOf` isn’t available, and tightened event logic.
-
-Paste this over your current `index.html` and commit; wait \~30s, then hard refresh your Pages URL.
-
-```html
 <!doctype html>
 <html lang="en">
 <head>
@@ -46,13 +33,8 @@ Paste this over your current `index.html` and commit; wait \~30s, then hard refr
 
   .select,.search{border:2px solid var(--border);padding:12px 14px;border-radius:12px;background:#fff;width:100%;font-size:15px}
   .select{height:48px}
-  .combo{position:relative}
   .search input{border:none;outline:none;width:100%;font-size:15px}
   .selected{margin-top:8px;font-size:15px;color:#334155;line-height:1.35;word-break:break-word;display:none}
-  .listbox{position:absolute;top:calc(100% + 6px);left:0;right:0;max-height:300px;overflow:auto;background:#fff;border:2px solid var(--border);
-           border-radius:12px;box-shadow:0 14px 34px rgba(2,6,23,.12);z-index:40}
-  .option{width:100%;text-align:left;padding:10px 14px;font-size:15px;cursor:pointer;background:#fff;border:none}
-  .option:hover,.option.active{background:#f8fafc}
 
   .slider-row{display:flex;align-items:center;gap:12px}
   .range{width:100%}
@@ -65,9 +47,7 @@ Paste this over your current `index.html` and commit; wait \~30s, then hard refr
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1>Time Zone Converter</h1>
-    </div>
+    <div class="header"><h1>Time Zone Converter</h1></div>
 
     <div class="summary" style="margin-top:18px">
       <div>
@@ -77,7 +57,7 @@ Paste this over your current `index.html` and commit; wait \~30s, then hard refr
       </div>
 
       <div class="grid2">
-        <!-- Rep -->
+        <!-- REP -->
         <div class="card">
           <div class="card-grid">
             <div class="label">Rep’s Timezone</div>
@@ -92,15 +72,15 @@ Paste this over your current `index.html` and commit; wait \~30s, then hard refr
           </div>
         </div>
 
-        <!-- Prospect -->
+        <!-- PROSPECT -->
         <div class="card">
           <div class="card-grid">
             <div class="label">Prospect’s Timezone</div>
-            <div class="combo">
-              <div class="search"><input id="prospect-input" type="text" placeholder="Type Country Name (or city/zone)" aria-label="Type to search country or time zone"></div>
-              <div id="prospect-selected" class="selected"></div>
-              <div id="prospect-list" class="listbox" style="display:none"></div>
+            <div class="search">
+              <input id="prospect-input" list="suggestions" placeholder="Type Country Name (or city/zone)" aria-label="Type to search country or time zone" />
+              <datalist id="suggestions"></datalist>
             </div>
+            <div id="prospect-selected" class="selected"></div>
             <div class="time-row">
               <span id="prospect-time" class="time">--:--</span>
               <button id="mil-toggle" class="toggle" aria-pressed="false" disabled>Military time</button>
@@ -115,19 +95,17 @@ Paste this over your current `index.html` and commit; wait \~30s, then hard refr
 
 <script>
 (() => {
-  // ===== Robust helpers =====
-  const BASE_DATE = new Date();
+  // ---------- Helpers ----------
+  const now = new Date();
   const pad = n => (n<10?'0':'')+n;
-  const clamp = n => ((n % 1440) + 1440) % 1440;
-  const safeIncludes = (str, q) => (str+'').toLowerCase().indexOf((q+'').toLowerCase()) !== -1;
+  const clamp = n => ((n%1440)+1440)%1440;
 
   function parts(d, tz){
     const dtf = new Intl.DateTimeFormat('en-US',{
       timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit',
       hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false
     });
-    const m = {};
-    dtf.formatToParts(d).forEach(p => { m[p.type] = p.value; });
+    const m = {}; dtf.formatToParts(d).forEach(p=>m[p.type]=p.value);
     return {year:+m.year, month:+m.month, day:+m.day, hour:+m.hour, minute:+m.minute, second:+m.second};
   }
   function offsetMin(tz, d){
@@ -143,177 +121,190 @@ Paste this over your current `index.html` and commit; wait \~30s, then hard refr
     return new Date(Date.UTC(year,month-1,day,hour,minute,0) - o*60000);
   }
   function convert(mins, fromTz, toTz){
-    const fp = parts(BASE_DATE, fromTz);
-    const h = Math.floor(mins/60), m = mins%60;
+    const fp = parts(now, fromTz);
+    const h=Math.floor(mins/60), m=mins%60;
     const utc = localToUTC({year:fp.year,month:fp.month,day:fp.day,hour:h,minute:m}, fromTz);
     const tp = parts(utc, toTz);
-    const target = tp.hour*60 + tp.minute;
+    const target = tp.hour*60+tp.minute;
     const fromMidUTC = localToUTC({year:fp.year,month:fp.month,day:fp.day,hour:0,minute:0}, fromTz);
     const toAtFromMid = parts(fromMidUTC, toTz);
-    const dayOff = Math.round(
-      (Date.UTC(tp.year,tp.month-1,tp.day) - Date.UTC(toAtFromMid.year,toAtFromMid.month-1,toAtFromMid.day)) / (24*3600*1000)
-    );
-    return {minutes: clamp(target), dayOff};
+    const dayOff = Math.round((Date.UTC(tp.year,tp.month-1,tp.day)-Date.UTC(toAtFromMid.year,toAtFromMid.month-1,toAtFromMid.day))/(24*3600*1000));
+    return {minutes:clamp(target), dayOff};
   }
-  const toLabel12 = mins => {
-    const h = Math.floor(mins/60), m = mins%60, p = h>=12 ? 'PM':'AM', h12 = ((h+11)%12)+1;
-    return h12+':'+pad(m)+' '+p;
+  function minutesNowIn(tz){
+    const p = parts(now, tz);
+    return p.hour*60 + p.minute;
+  }
+  const to12 = m => {
+    const h=Math.floor(m/60), mm=m%60, ap=h>=12?'PM':'AM', h12=((h+11)%12)+1;
+    return h12+':'+pad(mm)+' '+ap;
   };
-  const toLabel24 = mins => pad(Math.floor(mins/60))+':'+pad(mins%60);
+  const to24 = m => pad(Math.floor(m/60))+':'+pad(m%60);
   const labelTZ = tz => {
-    const p = tz.split('/');
-    return p[0]+' — '+p.slice(1).join('/').replace(/_/g,' ')+' ('+tz+')';
+    const p = tz.split('/'); return p[0]+' — '+p.slice(1).join('/').replace(/_/g,' ')+' ('+tz+')';
   };
 
-  function getAllTimeZones(){
-    try{
-      if (typeof Intl !== 'undefined' && typeof Intl.supportedValuesOf === 'function'){
-        return Intl.supportedValuesOf('timeZone');
-      }
-    }catch(e){}
-    // Fallback set (common zones + major regions)
+  // ---------- Data ----------
+  function allTimeZones(){
+    try{ if (Intl.supportedValuesOf) return Intl.supportedValuesOf('timeZone'); }catch(e){}
     return [
-      'Europe/London','Europe/Paris','Europe/Berlin','Europe/Rome','Europe/Bucharest','Europe/Madrid','Europe/Amsterdam','Europe/Brussels',
-      'Europe/Zurich','Europe/Vienna','Europe/Warsaw','Europe/Athens','Europe/Dublin','Europe/Oslo','Europe/Stockholm','Europe/Helsinki',
-      'America/New_York','America/Chicago','America/Denver','America/Los_Angeles','America/Phoenix','America/Toronto','America/Vancouver',
-      'America/Mexico_City','America/Bogota','America/Lima','America/Sao_Paulo','America/Argentina/Buenos_Aires','America/Santiago',
-      'Africa/Johannesburg','Africa/Cairo','Africa/Lagos','Africa/Nairobi',
-      'Asia/Jerusalem','Asia/Dubai','Asia/Riyadh','Asia/Kolkata','Asia/Karachi','Asia/Dhaka','Asia/Bangkok','Asia/Singapore',
-      'Asia/Taipei','Asia/Hong_Kong','Asia/Shanghai','Asia/Tokyo','Asia/Seoul','Australia/Sydney','Pacific/Auckland'
+      'Europe/London','Europe/Paris','Europe/Berlin','Europe/Rome','Europe/Bucharest','Europe/Madrid','Europe/Amsterdam',
+      'Europe/Brussels','Europe/Zurich','Europe/Vienna','Europe/Warsaw','Europe/Athens','Europe/Dublin','Europe/Oslo',
+      'Europe/Stockholm','Europe/Helsinki','America/New_York','America/Chicago','America/Denver','America/Los_Angeles',
+      'America/Phoenix','America/Toronto','America/Vancouver','America/Mexico_City','America/Bogota','America/Lima',
+      'America/Sao_Paulo','America/Argentina/Buenos_Aires','America/Santiago','Africa/Johannesburg','Africa/Cairo',
+      'Africa/Lagos','Africa/Nairobi','Asia/Jerusalem','Asia/Dubai','Asia/Riyadh','Asia/Kolkata','Asia/Karachi',
+      'Asia/Dhaka','Asia/Bangkok','Asia/Singapore','Asia/Taipei','Asia/Hong_Kong','Asia/Shanghai','Asia/Tokyo',
+      'Asia/Seoul','Australia/Sydney','Pacific/Auckland'
     ];
   }
-
-  // Countries -> primary zone (wide coverage; add more if needed)
   const COUNTRY_TZ = new Map([
+    // Europe highlights (includes Romania/Italy + many)
     ['Romania','Europe/Bucharest'], ['Italy','Europe/Rome'], ['United Kingdom','Europe/London'],
     ['France','Europe/Paris'], ['Germany','Europe/Berlin'], ['Spain','Europe/Madrid'], ['Portugal','Europe/Lisbon'],
     ['Ireland','Europe/Dublin'], ['Poland','Europe/Warsaw'], ['Greece','Europe/Athens'], ['Netherlands','Europe/Amsterdam'],
     ['Belgium','Europe/Brussels'], ['Sweden','Europe/Stockholm'], ['Norway','Europe/Oslo'], ['Finland','Europe/Helsinki'],
     ['Denmark','Europe/Copenhagen'], ['Switzerland','Europe/Zurich'], ['Austria','Europe/Vienna'], ['Czech Republic','Europe/Prague'],
     ['Hungary','Europe/Budapest'], ['Ukraine','Europe/Kyiv'], ['Turkey','Europe/Istanbul'],
+    // Americas
     ['United States','America/New_York'], ['Canada','America/Toronto'], ['Mexico','America/Mexico_City'],
     ['Brazil','America/Sao_Paulo'], ['Argentina','America/Argentina/Buenos_Aires'], ['Chile','America/Santiago'],
     ['Colombia','America/Bogota'], ['Peru','America/Lima'],
+    // Africa
     ['South Africa','Africa/Johannesburg'], ['Egypt','Africa/Cairo'], ['Nigeria','Africa/Lagos'], ['Kenya','Africa/Nairobi'],
+    // Asia/Oceania
     ['India','Asia/Kolkata'], ['China','Asia/Shanghai'], ['Japan','Asia/Tokyo'], ['South Korea','Asia/Seoul'],
     ['Singapore','Asia/Singapore'], ['Hong Kong','Asia/Hong_Kong'], ['Taiwan','Asia/Taipei'], ['Thailand','Asia/Bangkok'],
     ['United Arab Emirates','Asia/Dubai'], ['Israel','Asia/Jerusalem'], ['Saudi Arabia','Asia/Riyadh'],
     ['Australia','Australia/Sydney'], ['New Zealand','Pacific/Auckland']
   ]);
+
+  // Also accept well-known city names directly
   const CITY_HINTS = new Map([
     ['london','Europe/London'], ['rome','Europe/Rome'], ['bucharest','Europe/Bucharest'], ['paris','Europe/Paris'],
-    ['berlin','Europe/Berlin'], ['madrid','Europe/Madrid'], ['dublin','Europe/Dublin'], ['oslo','Europe/Oslo'],
-    ['stockholm','Europe/Stockholm'], ['helsinki','Europe/Helsinki'], ['athens','Europe/Athens'],
+    ['berlin','Europe/Berlin'], ['madrid','Europe/Madrid'], ['dublin','Europe/Dublin'],
     ['new york','America/New_York'], ['chicago','America/Chicago'], ['denver','America/Denver'], ['los angeles','America/Los_Angeles'],
     ['phoenix','America/Phoenix'], ['toronto','America/Toronto'], ['vancouver','America/Vancouver'],
-    ['mexico city','America/Mexico_City'], ['bogota','America/Bogota'], ['lima','America/Lima'], ['sao paulo','America/Sao_Paulo'],
-    ['buenos aires','America/Argentina/Buenos_Aires'], ['santiago','America/Santiago'],
-    ['cairo','Africa/Cairo'], ['lagos','Africa/Lagos'], ['nairobi','Africa/Nairobi'], ['johannesburg','Africa/Johannesburg'],
-    ['jerusalem','Asia/Jerusalem'], ['dubai','Asia/Dubai'], ['riyadh','Asia/Riyadh'], ['delhi','Asia/Kolkata'], ['mumbai','Asia/Kolkata'],
-    ['karachi','Asia/Karachi'], ['dhaka','Asia/Dhaka'], ['bangkok','Asia/Bangkok'], ['singapore','Asia/Singapore'],
-    ['taipei','Asia/Taipei'], ['hong kong','Asia/Hong_Kong'], ['shanghai','Asia/Shanghai'], ['tokyo','Asia/Tokyo'], ['seoul','Asia/Seoul'],
+    ['mexico city','America/Mexico_City'], ['bogota','America/Bogota'], ['lima','America/Lima'],
+    ['sao paulo','America/Sao_Paulo'], ['buenos aires','America/Argentina/Buenos_Aires'], ['santiago','America/Santiago'],
+    ['cairo','Africa/Cairo'], ['lagos','Africa/Lagos'], ['nairobi','Africa/Nairobi'],
+    ['jerusalem','Asia/Jerusalem'], ['dubai','Asia/Dubai'], ['riyadh','Asia/Riyadh'],
+    ['delhi','Asia/Kolkata'], ['mumbai','Asia/Kolkata'], ['shanghai','Asia/Shanghai'], ['tokyo','Asia/Tokyo'], ['seoul','Asia/Seoul'],
     ['sydney','Australia/Sydney'], ['auckland','Pacific/Auckland']
   ]);
 
-  const ALL_TZ = getAllTimeZones();
-  const COUNTRY_ROWS = Array.from(COUNTRY_TZ.entries()).map(([c,tz]) => ({
-    type:'country', key:c.toLowerCase(), label:c+' — '+labelTZ(tz), tz
-  }));
-  const ZONE_ROWS = ALL_TZ.map(tz => ({type:'zone', key:tz.toLowerCase(), label:labelTZ(tz), tz}));
+  // ---------- Build suggestion list (countries + zones) ----------
+  const tzs = allTimeZones();
+  const SUG = [];
+  COUNTRY_TZ.forEach((tz, c)=> SUG.push({q:c, tz, label:`${c} — ${labelTZ(tz)}`}));
+  tzs.forEach(tz => SUG.push({q:tz, tz, label:labelTZ(tz)}));
+  // Add city hints
+  CITY_HINTS.forEach((tz, city) => SUG.push({q:city, tz, label:`${city[0].toUpperCase()+city.slice(1)} — ${labelTZ(tz)}`}));
 
-  // ===== Elements =====
+  // Fill datalist
+  const dl = document.getElementById('suggestions');
+  dl.innerHTML = SUG.slice(0,800).map(r=>`<option value="${r.q}">`).join('');
+
+  // ---------- Elements ----------
   const repSelect = document.getElementById('rep-select');
   const repRange  = document.getElementById('rep-range');
   const repTime   = document.getElementById('rep-time');
 
   const pInput    = document.getElementById('prospect-input');
-  const pList     = document.getElementById('prospect-list');
   const pSelected = document.getElementById('prospect-selected');
+  const milBtn    = document.getElementById('mil-toggle');
+  const pRange    = document.getElementById('prospect-range');
+  const pTime     = document.getElementById('prospect-time');
+  const badge     = document.getElementById('badge');
+  const diffEl    = document.getElementById('diff');
 
-  const pRange = document.getElementById('prospect-range');
-  const pTime  = document.getElementById('prospect-time');
-  const milBtn = document.getElementById('mil-toggle');
-  const badge  = document.getElementById('badge');
-  const diffEl = document.getElementById('diff');
-
-  // ===== State =====
+  // ---------- State ----------
   let state = {
     repTz: repSelect.value || 'America/Chicago',
-    repMins: 9*60,
+    repMins: minutesNowIn(repSelect.value || 'America/Chicago'),
     pTz: null,
     pMins: null,
     p24: false
   };
 
-  // ===== Render =====
+  // ---------- Resolve query -> tz ----------
+  function resolveProspect(q){
+    if(!q) return null;
+    const s = q.trim().toLowerCase();
+    if (CITY_HINTS.has(s)) return CITY_HINTS.get(s);
+    // Exact country
+    for (const [c,tz] of COUNTRY_TZ) if (c.toLowerCase()===s) return tz;
+    // Exact tz id
+    if (tzs.find(z => z.toLowerCase()===s)) return s;
+    // Fuzzy contains on labels/ids
+    const hit = tzs.find(z => labelTZ(z).toLowerCase().indexOf(s) !== -1 || z.toLowerCase().indexOf(s) !== -1);
+    if (hit) return hit;
+    return null;
+  }
+
+  // ---------- Render ----------
   function render(){
-    repTime.textContent = toLabel12(state.repMins);
+    // Rep
+    repTime.textContent = to12(state.repMins);
     repRange.value = state.repMins;
 
-    const hasProspect = !!state.pTz;
-    milBtn.disabled = !hasProspect;
-    pRange.disabled  = !hasProspect;
+    const hasP = !!state.pTz;
+    milBtn.disabled = !hasP;
+    pRange.disabled = !hasP;
 
-    if (hasProspect){
+    if (hasP){
       const conv = convert(state.repMins, state.repTz, state.pTz);
       state.pMins = conv.minutes;
-      pTime.textContent = state.p24 ? toLabel24(state.pMins) : toLabel12(state.pMins);
+      pTime.textContent = state.p24 ? to24(state.pMins) : to12(state.pMins);
       pRange.value = state.pMins;
 
-      if (conv.dayOff !== 0){
-        badge.style.display = 'inline-block';
-        badge.textContent = (conv.dayOff>0?'+':'')+conv.dayOff+' day';
-      } else {
-        badge.style.display = 'none';
-      }
+      if (conv.dayOff !== 0){ badge.style.display='inline-block'; badge.textContent=(conv.dayOff>0?'+':'')+conv.dayOff+' day'; }
+      else { badge.style.display='none'; }
 
       let d = (state.pMins - state.repMins)/60;
       d = Math.round(d*100)/100; if (d>12) d-=24; if (d<-12) d+=24;
-      diffEl.textContent = (d>0?'+':'')+d+' hrs';
+      diffEl.textContent = (d>0?'+':'') + d + ' hrs';
     } else {
       pTime.textContent = '--:--';
-      badge.style.display = 'none';
+      badge.style.display='none';
       diffEl.textContent = '—';
     }
   }
 
-  // ===== Prospect search =====
-  function openList(q){
-    const s = (q||'').trim().toLowerCase();
-    let rows = COUNTRY_ROWS.concat(ZONE_ROWS);
-
-    // Boost city keywords first
-    if (CITY_HINTS.has(s)){ rows = [{type:'city', key:s, label:labelTZ(CITY_HINTS.get(s)), tz:CITY_HINTS.get(s)}].concat(rows); }
-
-    const filtered = s ? rows.filter(r => safeIncludes(r.label, s) || safeIncludes(r.tz, s) || safeIncludes(r.key, s)) : COUNTRY_ROWS;
-    pList.innerHTML = filtered.slice(0,500).map(r => `<button class="option" data-tz="${r.tz}">${r.label}</button>`).join('') ||
-      `<div class="muted" style="padding:10px 14px">No matches.</div>`;
-    pList.style.display = 'block';
-  }
-  function closeList(){ pList.style.display='none'; }
-
-  document.addEventListener('click', e => { if (!pList.contains(e.target) && e.target !== pInput) closeList(); });
-  pInput.addEventListener('focus', () => openList(pInput.value));
-  pInput.addEventListener('input', () => openList(pInput.value));
-  pInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter'){
-      const first = pList.querySelector('[data-tz]');
-      if (first){ first.click(); e.preventDefault(); }
-    } else if (e.key === 'Escape'){ closeList(); }
-  });
-  pList.addEventListener('click', e => {
-    const btn = e.target.closest('[data-tz]'); if(!btn) return;
-    state.pTz = btn.getAttribute('data-tz');
-    pSelected.textContent = labelTZ(state.pTz);
-    pSelected.style.display = 'block';
-    pInput.value = '';
-    closeList();
+  // ---------- Events ----------
+  repSelect.addEventListener('change', e => {
+    state.repTz = e.target.value;
+    state.repMins = minutesNowIn(state.repTz);
     render();
   });
+  repRange.addEventListener('input', e => { state.repMins = +e.target.value; render(); });
 
-  // ===== Events =====
-  repSelect.addEventListener('change', e => { state.repTz = e.target.value; render(); });
-  repRange.addEventListener('input',  e => { state.repMins = +e.target.value; render(); });
+  pInput.addEventListener('change', () => {
+    const tz = resolveProspect(pInput.value);
+    if (tz){
+      state.pTz = tz;
+      pSelected.textContent = labelTZ(tz);
+      pSelected.style.display = 'block';
+      // Snap Prospect to current converted time
+      const conv = convert(state.repMins, state.repTz, state.pTz);
+      state.pMins = conv.minutes;
+      render();
+    }
+  });
+  pInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter'){
+      const tz = resolveProspect(pInput.value);
+      if (tz){
+        state.pTz = tz;
+        pSelected.textContent = labelTZ(tz);
+        pSelected.style.display = 'block';
+        const conv = convert(state.repMins, state.repTz, state.pTz);
+        state.pMins = conv.minutes;
+        render();
+      }
+    }
+  });
+
   milBtn.addEventListener('click', () => {
     state.p24 = !state.p24;
     milBtn.classList.toggle('active', state.p24);
@@ -321,12 +312,9 @@ Paste this over your current `index.html` and commit; wait \~30s, then hard refr
     render();
   });
 
-  // ===== Init =====
+  // ---------- Init ----------
   render();
 })();
 </script>
 </body>
 </html>
-```
-
-If **anything** still doesn’t react (typing “London”, pressing Enter, moving the left slider after picking a zone), tell me exactly what you typed and what you clicked—I’ll tweak the matching or event wiring again.
