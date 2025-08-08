@@ -1,0 +1,94 @@
+import React, { useMemo, useState } from "react";
+
+/**
+ * FIX: The canvas file was set to `code/react` but contained Markdown text.
+ * That caused the bundler to try to parse `**` and plain text as JavaScript,
+ * throwing `SyntaxError: /: Unexpected token (1:0)`.
+ *
+ * This replaces it with a valid React component that renders the same
+ * instructions as UI. No Markdown in code. Also includes simple self-tests.
+ */
+
+// Tiny helper for copy-to-clipboard
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch { return false; }
+}
+
+function CodeBox({ title, code }) {
+  const [ok, setOk] = useState(false);
+  return (
+    <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, overflow: "hidden", background: "#fff", marginTop: 8 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "#f8fafc", borderBottom: "1px solid #e5e7eb" }}>
+        <div style={{ fontSize: 12, color: "#334155", textTransform: "uppercase", letterSpacing: ".06em" }}>{title}</div>
+        <button onClick={async () => setOk(await copy(code))} style={{ fontSize: 12, border: "1px solid #e5e7eb", borderRadius: 6, padding: "4px 8px", background: "white", cursor: "pointer" }}>{ok ? "Copied" : "Copy"}</button>
+      </div>
+      <pre style={{ margin: 0, padding: 12, fontSize: 13, lineHeight: 1.45, overflowX: "auto" }}><code>{code}</code></pre>
+    </div>
+  );
+}
+
+function Step({ n, title, children }) {
+  return (
+    <section style={{ marginBottom: 18 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ width: 28, height: 28, borderRadius: 999, background: "#0ea5e9", color: "white", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{n}</div>
+        <h3 style={{ margin: 0 }}>{title}</h3>
+      </div>
+      <div style={{ marginTop: 8 }}>{children}</div>
+    </section>
+  );
+}
+
+export default function DeployInstructions() {
+  const repo = "recast-timezone-converter";
+  const commands = [
+    "git init",
+    "git add .",
+    'git commit -m "Initial commit"',
+    "git branch -M main",
+    `git remote add origin https://github.com/YOUR-USERNAME/${repo}.git`,
+    "git push -u origin main",
+  ];
+
+  // Self-tests to ensure the content is sane
+  const tests = useMemo(() => {
+    return [
+      { name: "No Markdown asterisks at line start", ok: ![...commands, `cd /path/to/${repo}`].some(l => /^\*\*/.test(l)) },
+      { name: "Contains remote add origin", ok: commands.join("\n").includes("git remote add origin https://github.com/") },
+      { name: "Sequence begins with git init", ok: commands[0].startsWith("git init") },
+    ];
+  }, []);
+
+  const allGreen = tests.every(t => t.ok);
+
+  return (
+    <div style={{ minHeight: "100vh", background: "linear-gradient(#fff,#f8fafc)", padding: 24 }}>
+      <div style={{ maxWidth: 840, margin: "0 auto", background: "#fff", border: "1px solid #e5e7eb", borderRadius: 16, boxShadow: "0 4px 16px rgba(2,6,23,.05)", padding: 20 }}>
+        <h2 style={{ marginTop: 0 }}>Push your folder to a new GitHub repository</h2>
+        <div style={{ color: allGreen ? "#065f46" : "#991b1b", fontSize: 12, marginBottom: 12 }}>Self‑tests: {allGreen ? "all passing" : "needs attention"}</div>
+
+        <Step n={1} title="Create the repo on GitHub">
+          <ol>
+            <li>Go to <a href="https://github.com/new" target="_blank" rel="noreferrer">github.com/new</a></li>
+            <li>Name it <code>{repo}</code> (don’t add README/.gitignore)</li>
+            <li>Click <strong>Create repository</strong></li>
+          </ol>
+        </Step>
+
+        <Step n={2} title="Open Terminal and go to the project folder">
+          <CodeBox title="Change directory" code={`cd /path/to/${repo}`} />
+        </Step>
+
+        <Step n={3} title="Run these commands (replace YOUR-USERNAME)">
+          <CodeBox title="Git commands" code={commands.join("\n")} />
+        </Step>
+
+        <Step n={4} title="Verify">
+          <div>Refresh the repo page; you should see your files.</div>
+        </Step>
+
+        <div style={{ marginTop: 18, color: "#64748b" }}>Next: import this repo in Vercel → Build: <code>npm run build</code> → Output: <code>dist</code> → Deploy.</div>
+      </div>
+    </div>
+  );
+}
