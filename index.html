@@ -8,42 +8,32 @@
   :root{
     --bg:#f8fafc; --card:#fff; --border:#0f172a; --text:#0f172a; --muted:#64748b;
     --orange:#f97316; --blue:#2563eb; --ring:#bae6fd;
-    --green:#065f46; --green-bg:#ecfdf5; --green-br:#a7f3d0;
     --tick-gap:12px; /* unified vertical gap under sliders */
   }
   *{box-sizing:border-box} html,body{height:100%;margin:0}
   body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,Noto Sans;
        background:linear-gradient(#fff,var(--bg));color:var(--text)}
-  .container{max-width:1200px;margin:40px auto;padding:28px;background:var(--card);
+  .container{max-width:1100px;margin:40px auto;padding:28px;background:var(--card);
              border:6px solid var(--orange);border-radius:18px;box-shadow:0 8px 28px rgba(2,6,23,.08)}
   h1{margin:8px 0 18px;font-size:30px}
 
-  /* Two columns: summary (left) and the stacked panels (right) */
-  .layout{display:grid;grid-template-columns:420px 1fr;gap:18px}
-  @media(max-width:1100px){.layout{grid-template-columns:1fr}}
-
-  .summary{border:3px solid var(--blue);border-radius:14px;padding:22px;background:#fff;height:100%}
-  .muted{color:var(--muted);font-size:15px;line-height:1.35}
-  .big{font-size:32px;font-weight:800;margin:2px 0 10px}
-
-  /* Right side: stack Rep card over Prospect card */
-  .stack{display:grid;grid-template-rows:auto auto;gap:18px}
+  /* Two cards side-by-side; stack on mobile */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:980px){.grid2{grid-template-columns:1fr}}
 
   .card{background:#fff;border:3px solid var(--border);border-radius:14px;padding:18px}
-  /* Fixed rows so time + slider rows align perfectly within each card */
-  .card-grid{display:grid;grid-template-rows:auto auto 64px 56px 92px;gap:12px}
+  .label{text-transform:uppercase;letter-spacing:.06em;color:#64748b;font-size:12px;margin-bottom:8px}
 
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .label{text-transform:uppercase;letter-spacing:.06em;color:#64748b;font-size:12px}
-  .time-row{display:flex;align-items:center;gap:12px}
-  .time{font-size:24px;font-weight:800;white-space:nowrap;line-height:1} /* never wrap AM/PM */
-  .badge{font-size:12px;background:#f1f5f9;color:#334155;padding:2px 8px;border-radius:999px}
+  /* fixed rows inside each card so times/sliders align perfectly */
+  .card-grid{display:grid;grid-template-rows:auto 56px 64px 56px;gap:10px}
 
   .select,.input{border:2px solid var(--border);padding:10px 12px;border-radius:12px;background:#fff;width:100%;font-size:15px;height:44px}
   .button{border:2px solid var(--border);padding:9px 14px;border-radius:12px;background:#fff;font-weight:700;cursor:pointer;height:44px}
   .button.active{background:#0ea5e9;border-color:#0ea5e9;color:#fff}
   .button:focus,.select:focus,.input:focus{outline:3px solid var(--ring)}
-  .tiny{font-size:12px;color:#475569}
+
+  .time-row{display:flex;align-items:center;gap:12px}
+  .time{font-size:28px;font-weight:800;white-space:nowrap;line-height:1}
 
   /* sliders + three ticks (25%, 50%, 75%) */
   .range{
@@ -65,25 +55,25 @@
   .range::-moz-range-progress{height:10px;background:#0b66ff;border-radius:8px}
   .range::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#0b66ff;border:2px solid #fff}
 
-  /* Symmetric padding so left/right labels line up identically */
-  .tick-wrap{padding-inline:80px}
+  /* symmetric padding so left/right labels line up identically */
+  .tick-wrap{padding-inline:84px}
   .ticks{
     display:flex;justify-content:space-between;align-items:flex-start;
     font-size:12px;color:#64748b;margin-top:var(--tick-gap);line-height:1;white-space:nowrap
   }
-  /* base offsets so labels don’t sit on tick lines */
   .ticks span{width:0;position:relative}
   .ticks span:first-child{transform:translateX(-10px)}
   .ticks span:nth-child(2){transform:translateX(0)}
   .ticks span:last-child{transform:translateX(10px)}
 
-  .overlap{margin-top:14px;padding:10px 12px;border:2px dashed #cbd5e1;border-radius:10px;background:#fafcff}
-  .ov-title{font-weight:700;margin-bottom:6px}
-  .ov-row{font-size:14px;margin:6px 6px 0 0;padding:6px 8px;border-radius:8px;
-          color:var(--green);background:var(--green-bg);border:1px solid var(--green-br);display:inline-block}
+  /* Summary block pinned to bottom */
+  .summary{margin-top:20px;border:3px solid var(--blue);border-radius:14px;padding:16px;background:#fff;text-align:center}
+  .muted{color:var(--muted);font-size:15px;line-height:1.35}
+  .big{font-size:32px;font-weight:800;margin:2px 0 6px}
 
-  /* country search dropdown */
-  .listbox{position:absolute;z-index:30;background:#fff;border:2px solid #cbd5e1;border-radius:10px;max-height:260px;overflow:auto;box-shadow:0 10px 24px rgba(2,6,23,.12)}
+  /* Country search dropdown (simple, accessible) */
+  .box{position:relative}
+  .listbox{position:absolute;z-index:30;background:#fff;border:2px solid #cbd5e1;border-radius:10px;max-height:260px;overflow:auto;box-shadow:0 10px 24px rgba(2,6,23,.12);left:0;right:0}
   .option{padding:8px 12px;cursor:pointer}
   .option[aria-selected="true"], .option:hover{background:#eff6ff}
 </style>
@@ -92,171 +82,84 @@
   <div class="container">
     <h1>Time Zone Converter</h1>
 
-    <div class="layout">
-      <!-- LEFT: Summary stays as-is -->
-      <div class="summary">
-        <div class="muted">Current difference</div>
-        <div id="diff" class="big">—</div>
-        <div class="muted">Drag either slider; the other mirrors exactly.</div>
+    <div class="grid2">
+      <!-- REP (always AM/PM) -->
+      <div class="card">
+        <div class="card-grid">
+          <div>
+            <div class="label">Rep’s Timezone</div>
+            <select id="rSelect" class="select">
+              <option value="America/Los_Angeles">Pacific</option>
+              <option value="America/Denver">Mountain</option>
+              <option value="America/Chicago" selected>Central</option>
+              <option value="America/New_York">Eastern</option>
+            </select>
+          </div>
 
-        <div class="overlap">
-          <div class="ov-title">Overlapping business hours (<span id="bhLabel">9–5</span> local)</div>
-          <div id="overlap">Pick a prospect time zone to see overlaps.</div>
+          <div class="time-row">
+            <span id="rTime" class="time">--:--</span>
+          </div>
+
+          <div class="tick-wrap">
+            <input id="rRange" class="range" type="range" min="0" max="1439" step="15"/>
+            <div class="ticks" id="rTicks"><span>6 AM</span><span>12 PM</span><span>6 PM</span></div>
+          </div>
         </div>
       </div>
 
-      <!-- RIGHT: Stack Rep over Prospect -->
-      <div class="stack">
-        <!-- REP (top) -->
-        <div class="card">
-          <div class="card-grid">
-            <div class="label">Rep’s Timezone</div>
-
-            <div class="row">
-              <select id="rSelect" class="select">
-                <option value="America/Los_Angeles">Pacific</option>
-                <option value="America/Denver">Mountain</option>
-                <option value="America/Chicago" selected>Central</option>
-                <option value="America/New_York">Eastern</option>
-              </select>
-              <div></div>
-            </div>
-
-            <div class="time-row"><span id="rTime" class="time">--:--</span></div>
-
-            <div id="rTickWrap" class="tick-wrap">
-              <input id="rRange" class="range" type="range" min="0" max="1439" step="15"/>
-              <div class="ticks" id="rTicks"><span>6 AM</span><span>12 PM</span><span>6 PM</span></div>
-            </div>
-
-            <div class="row">
-              <select id="rStart" class="select"></select>
-              <select id="rEnd" class="select"></select>
-              <div class="tiny" style="grid-column:1/-1">Rep hours</div>
+      <!-- PROSPECT (AM/PM by default; toggle to 24h) -->
+      <div class="card">
+        <div class="card-grid">
+          <div>
+            <div class="label">Prospect’s Country</div>
+            <div class="box">
+              <input id="countryInput" class="input" placeholder="Type country name" autocomplete="off" aria-autocomplete="list" aria-controls="countryList" />
+              <div id="countryList" class="listbox" role="listbox" style="display:none"></div>
             </div>
           </div>
-        </div>
 
-        <!-- PROSPECT (bottom) -->
-        <div class="card">
-          <div class="card-grid">
-            <div class="label">Prospect’s Timezone</div>
+          <div class="time-row">
+            <span id="pTime" class="time">--:--</span>
+            <button id="milBtn" class="button" aria-pressed="false">Military time</button>
+            <span id="badge" style="display:none;border:2px solid #cbd5e1;border-radius:999px;padding:2px 8px;font-size:12px;color:#334155;">+1 day</span>
+          </div>
 
-            <!-- Country / Region / Zone flow -->
-            <div class="row">
-              <div style="position:relative">
-                <input id="countryInput" class="input" placeholder="Type country name" autocomplete="off" aria-autocomplete="list" aria-controls="countryList" />
-                <div id="countryList" class="listbox" role="listbox" style="display:none;"></div>
-                <div class="tiny">Country</div>
-              </div>
-              <select id="regionSelect" class="select" disabled>
-                <option value="">Region/State</option>
-              </select>
-            </div>
-            <div class="row">
-              <select id="zoneSelect" class="select" disabled>
-                <option value="">Time zone</option>
-              </select>
-              <label class="tiny" style="align-self:center;display:flex;gap:8px">
-                <input type="checkbox" id="allZonesToggle" />
-                Show all time zones
-              </label>
-            </div>
-
-            <div class="time-row">
-              <span id="pTime" class="time">--:--</span>
-              <button id="milBtn" class="button" aria-pressed="false">Military time</button>
-              <span id="badge" class="badge" style="display:none"></span>
-            </div>
-
-            <div id="pTickWrap" class="tick-wrap">
-              <input id="pRange" class="range" type="range" min="0" max="1439" step="15"/>
-              <div class="ticks" id="pTicks"><span>–</span><span>–</span><span>–</span></div>
-            </div>
-
-            <div class="row">
-              <select id="pStart" class="select"></select>
-              <select id="pEnd" class="select"></select>
-              <div class="tiny" style="grid-column:1/-1">Prospect hours</div>
-            </div>
+          <div class="tick-wrap">
+            <input id="pRange" class="range" type="range" min="0" max="1439" step="15"/>
+            <div class="ticks" id="pTicks"><span>–</span><span>–</span><span>–</span></div>
           </div>
         </div>
+      </div>
+    </div>
 
-      </div><!-- /stack -->
-    </div><!-- /layout -->
+    <!-- SUMMARY AT THE BOTTOM -->
+    <div class="summary">
+      <div class="muted">Current difference</div>
+      <div id="diff" class="big">—</div>
+      <div class="muted">Drag either slider; the other mirrors exactly.</div>
+    </div>
   </div>
 
 <script>
 (() => {
-  // =========================
-  // Country → Region → Zone data (initial set; easy to extend)
-  // =========================
-  const COUNTRY_DATA = {
-    "United States": {
-      regions: {
-        "Alaska": ["America/Anchorage"],
-        "Hawaii": ["Pacific/Honolulu"],
-        "Pacific": ["America/Los_Angeles"],
-        "Mountain": ["America/Denver"],
-        "Central": ["America/Chicago"],
-        "Eastern": ["America/New_York"]
-      }
-    },
-    "Canada": {
-      regions: {
-        "British Columbia": ["America/Vancouver"],
-        "Alberta": ["America/Edmonton"],
-        "Saskatchewan": ["America/Regina"],
-        "Manitoba": ["America/Winnipeg"],
-        "Ontario": ["America/Toronto"],
-        "Quebec": ["America/Montreal"],
-        "New Brunswick": ["America/Moncton"],
-        "Nova Scotia": ["America/Halifax"],
-        "Newfoundland & Labrador": ["America/St_Johns"],
-        "Nunavut": ["America/Iqaluit"],
-        "Northwest Territories": ["America/Yellowknife"]
-      }
-    },
-    "United Kingdom": { zones: ["Europe/London"] },
-    "Italy": { zones: ["Europe/Rome"] },
-    "Romania": { zones: ["Europe/Bucharest"] },
-    "Germany": { zones: ["Europe/Berlin"] },
-    "France": { zones: ["Europe/Paris"] },
-    "Spain": { zones: ["Europe/Madrid"] },
-    "India": { zones: ["Asia/Kolkata"] },
-    "Japan": { zones: ["Asia/Tokyo"] },
-    "Australia": {
-      regions: {
-        "Western Australia": ["Australia/Perth"],
-        "Northern Territory": ["Australia/Darwin"],
-        "Queensland": ["Australia/Brisbane"],
-        "South Australia": ["Australia/Adelaide"],
-        "New South Wales / ACT": ["Australia/Sydney"],
-        "Victoria": ["Australia/Melbourne"],
-        "Tasmania": ["Australia/Hobart"]
-      }
-    },
-    "Mexico": {
-      regions: {
-        "Pacific": ["America/Tijuana"],
-        "Mountain": ["America/Chihuahua"],
-        "Central": ["America/Mexico_City"],
-        "Eastern (QR)": ["America/Cancun"]
-      }
-    },
-    "Brazil": {
-      regions: {
-        "Acre": ["America/Rio_Branco"],
-        "Amazonas": ["America/Manaus"],
-        "Mato Grosso": ["America/Cuiaba"],
-        "Brasília": ["America/Sao_Paulo"]
-      }
-    },
-    "South Africa": { zones: ["Africa/Johannesburg"] }
+  // Country -> "primary" business time zone (capital / most common)
+  const COUNTRY_TZ = {
+    "United States":"America/New_York","Canada":"America/Toronto","United Kingdom":"Europe/London","Ireland":"Europe/Dublin",
+    "Italy":"Europe/Rome","Romania":"Europe/Bucharest","Germany":"Europe/Berlin","France":"Europe/Paris","Spain":"Europe/Madrid",
+    "Netherlands":"Europe/Amsterdam","Sweden":"Europe/Stockholm","Norway":"Europe/Oslo","Denmark":"Europe/Copenhagen",
+    "Switzerland":"Europe/Zurich","Poland":"Europe/Warsaw","Portugal":"Europe/Lisbon","Greece":"Europe/Athens","Turkey":"Europe/Istanbul",
+    "Israel":"Asia/Jerusalem","United Arab Emirates":"Asia/Dubai","Saudi Arabia":"Asia/Riyadh","Egypt":"Africa/Cairo",
+    "India":"Asia/Kolkata","Pakistan":"Asia/Karachi","Bangladesh":"Asia/Dhaka","China":"Asia/Shanghai","Hong Kong":"Asia/Hong_Kong",
+    "Taiwan":"Asia/Taipei","Japan":"Asia/Tokyo","South Korea":"Asia/Seoul","Singapore":"Asia/Singapore","Malaysia":"Asia/Kuala_Lumpur",
+    "Thailand":"Asia/Bangkok","Vietnam":"Asia/Ho_Chi_Minh","Indonesia":"Asia/Jakarta","Philippines":"Asia/Manila",
+    "Australia":"Australia/Sydney","New Zealand":"Pacific/Auckland",
+    "Brazil":"America/Sao_Paulo","Argentina":"America/Argentina/Buenos_Aires","Chile":"America/Santiago","Colombia":"America/Bogota",
+    "Peru":"America/Lima","Mexico":"America/Mexico_City",
+    "South Africa":"Africa/Johannesburg","Nigeria":"Africa/Lagos","Kenya":"Africa/Nairobi","Ghana":"Africa/Accra"
   };
-  const COUNTRIES = Object.keys(COUNTRY_DATA).sort();
+  const COUNTRIES = Object.keys(COUNTRY_TZ).sort();
 
-  // ========= DST-safe conversion helpers =========
+  // ==== DST-safe conversion helpers ====
   const BASE = new Date();
   const pad = n => (n<10?'0':'')+n;
   const clamp = n => ((n%1440)+1440)%1440;
@@ -292,68 +195,30 @@
   const fmt12 = m => { const h=Math.floor(m/60),mm=m%60,ap=h>=12?'PM':'AM',h12=((h+11)%12)+1; return h12+':'+pad(mm)+' '+ap; };
   const fmt24 = m => pad(Math.floor(m/60))+':'+pad(m%60);
 
-  // ========= Elements =========
+  // ==== Elements ====
   const rSelect = document.getElementById('rSelect');
   const rRange  = document.getElementById('rRange');
   const rTime   = document.getElementById('rTime');
 
   const countryInput = document.getElementById('countryInput');
   const countryList  = document.getElementById('countryList');
-  const regionSelect = document.getElementById('regionSelect');
-  const zoneSelect   = document.getElementById('zoneSelect');
-  const allZonesToggle = document.getElementById('allZonesToggle');
 
   const pRange  = document.getElementById('pRange');
   const pTime   = document.getElementById('pTime');
   const badge   = document.getElementById('badge');
   const diffEl  = document.getElementById('diff');
-  const overlapEl = document.getElementById('overlap');
   const milBtn  = document.getElementById('milBtn');
-  const bhLabel = document.getElementById('bhLabel');
 
-  const rStart = document.getElementById('rStart');
-  const rEnd   = document.getElementById('rEnd');
-  const pStart = document.getElementById('pStart');
-  const pEnd   = document.getElementById('pEnd');
-
-  // Fill 15-min time choices for business hours
-  function fillTimeSelect(sel, def){
-    sel.innerHTML = '';
-    for (let m=0; m<1440; m+=15){
-      const opt = document.createElement('option');
-      opt.value = m;
-      opt.textContent = fmt24(m);
-      sel.appendChild(opt);
-    }
-    sel.value = def;
-  }
-  // Defaults (persisted)
-  const LS = (k, v) => v===undefined ? localStorage.getItem(k) : localStorage.setItem(k, v);
-  fillTimeSelect(rStart, +LS('rStart') || 9*60);
-  fillTimeSelect(rEnd,   +LS('rEnd')   || 17*60);
-  fillTimeSelect(pStart, +LS('pStart') || 9*60);
-  fillTimeSelect(pEnd,   +LS('pEnd')   || 17*60);
-  function updateBhLabel(){
-    bhLabel.textContent = `${fmt12(+pStart.value).replace(' ','')}–${fmt12(+pEnd.value).replace(' ','')}`;
-    LS('rStart', rStart.value); LS('rEnd', rEnd.value);
-    LS('pStart', pStart.value); LS('pEnd', pEnd.value);
-    updateProspectTickLabels(); updateOverlap(); render();
-  }
-  rStart.addEventListener('change', updateBhLabel);
-  rEnd.addEventListener('change', updateBhLabel);
-  pStart.addEventListener('change', updateBhLabel);
-  pEnd.addEventListener('change', updateBhLabel);
-
-  // Prospect state
+  // ==== State ====
   let state = {
     repTz: rSelect.value,
-    repMins: 720,
+    repMins: 720,   // 12:00 PM start
     pTz: null,
     pMins: null,
-    use24: false
+    use24: false    // controls **prospect** display only
   };
 
-  // ===== Country fuzzy search + keyboard =====
+  // ---- Country search (fuzzy) ----
   function fuzzyScore(q, s){
     q=q.toLowerCase(); s=s.toLowerCase();
     let i=0,score=0;
@@ -383,6 +248,7 @@
     const opt = countryList.querySelector('.option[aria-selected="true"]');
     if (opt) chooseCountry(opt.dataset.value);
   }
+  countryInput.addEventListener('focus', ()=>renderCountryList(countryInput.value.trim()));
   countryInput.addEventListener('input', e=>{ activeIdx=0; renderCountryList(e.target.value.trim()); });
   countryInput.addEventListener('keydown', e=>{
     if (e.key==='ArrowDown'){ e.preventDefault(); moveActive(1); }
@@ -397,75 +263,13 @@
   function chooseCountry(name){
     countryInput.value = name;
     countryList.style.display = 'none';
-    populateForCountry(name);
+    const tz = COUNTRY_TZ[name] || null;
+    state.pTz = tz;
+    updateProspectTickLabels(); render();
   }
 
-  function populateForCountry(name){
-    const entry = COUNTRY_DATA[name];
-    regionSelect.innerHTML = '<option value="">Region/State</option>';
-    zoneSelect.innerHTML   = '<option value="">Time zone</option>';
-    regionSelect.disabled = true; zoneSelect.disabled = true;
-
-    if (!entry){ state.pTz=null; render(); return; }
-
-    if (entry.regions){
-      regionSelect.disabled = false;
-      for (const r of Object.keys(entry.regions)){
-        const opt = document.createElement('option'); opt.value=r; opt.textContent=r; regionSelect.appendChild(opt);
-      }
-      regionSelect.addEventListener('change', ()=>{
-        const r = regionSelect.value;
-        zoneSelect.innerHTML = '<option value="">Time zone</option>';
-        if (r){
-          zoneSelect.disabled = false;
-          for (const z of entry.regions[r]){
-            const opt = document.createElement('option'); opt.value=z; opt.textContent=z; zoneSelect.appendChild(opt);
-          }
-          zoneSelect.value = entry.regions[r][0];
-          state.pTz = zoneSelect.value; updateProspectTickLabels(); updateOverlap(); render();
-        } else {
-          zoneSelect.disabled = true; state.pTz=null; render();
-        }
-      }, { once:true });
-    } else if (entry.zones){
-      zoneSelect.disabled = false;
-      for (const z of entry.zones){
-        const opt = document.createElement('option'); opt.value=z; opt.textContent=z; zoneSelect.appendChild(opt);
-      }
-      zoneSelect.value = entry.zones[0];
-      state.pTz = zoneSelect.value; updateProspectTickLabels(); updateOverlap(); render();
-    }
-  }
-
-  // All zones fallback
-  function fillAllIANA(){
-    try{
-      if (Intl.supportedValuesOf){
-        const all = Intl.supportedValuesOf('timeZone');
-        zoneSelect.innerHTML = all.map(z=>`<option value="${z}">${z}</option>`).join('');
-        zoneSelect.disabled = false;
-        zoneSelect.value = 'Europe/London';
-        state.pTz = zoneSelect.value; updateProspectTickLabels(); updateOverlap(); render();
-      }
-    }catch(_){}
-  }
-  allZonesToggle.addEventListener('change', e=>{
-    if (e.target.checked){
-      regionSelect.disabled = true;
-      fillAllIANA();
-    } else {
-      zoneSelect.innerHTML = '<option value="">Time zone</option>';
-      countryInput.value=''; countryList.style.display='none';
-      regionSelect.disabled = true; zoneSelect.disabled = true;
-      state.pTz = null; updateProspectTickLabels(); updateOverlap(); render();
-    }
-  });
-  zoneSelect.addEventListener('change', ()=>{
-    state.pTz = zoneSelect.value || null; updateProspectTickLabels(); updateOverlap(); render();
-  });
-
-  // ===== Mirror sliders / format =====
-  const REP_TICKS = [360,720,1080];
+  // ---- Tick labels ----
+  const REP_TICKS = [360,720,1080]; // 6,12,6
   function setPTicks(a){
     const el=document.getElementById('pTicks');
     el.children[0].textContent=a[0]; el.children[1].textContent=a[1]; el.children[2].textContent=a[2];
@@ -480,59 +284,21 @@
     requestAnimationFrame(adjustTickLabels);
   }
 
-  // Overlap with editable windows (inclusive end → exact :00)
-  function inWin(m, s, e){ return m>=s && m<=e; }
-  function computeOverlap(){
-    if (!state.pTz) return [];
-    const rs = +rStart.value, re = +rEnd.value;
-    const ps = +pStart.value, pe = +pEnd.value;
-    const segs=[]; let cur=null;
-    for (let m=0; m<=1440; m+=15){
-      const p = convert(m, state.repTz, state.pTz).minutes;
-      const ok = inWin(m,rs,re) && inWin(p,ps,pe);
-      if (ok){
-        if (!cur) cur={rs:m, re:null};
-        cur.re = Math.min(m+15, re);
-      } else if (cur){
-        segs.push(cur); cur=null;
-      }
-    }
-    if (cur) segs.push(cur);
-    return segs;
-  }
-  function chip(seg){
-    const f = state.use24 ? fmt24 : fmt12;
-    const repStart = seg.rs, repEnd = seg.re;
-    const pStartConv = convert(repStart, state.repTz, state.pTz);
-    const pEndConv   = convert(repEnd,   state.repTz, state.pTz);
-    const repLabel = `${f(repStart)}–${f(repEnd)}`;
-    const pLabel   = `${f(pStartConv.minutes)}–${f(pEndConv.minutes)}`;
-    let shiftTxt = '';
-    if (pStartConv.dayOff!==0 || pEndConv.dayOff!==0){
-      shiftTxt = ` ${(pStartConv.dayOff>0||pEndConv.dayOff>0)?'(+1 day)' : '(-1 day)'}`;
-    }
-    return `<span class="ov-row">Rep ${repLabel} ↔ Prospect ${pLabel}${shiftTxt}</span>`;
-  }
-  function updateOverlap(){
-    if (!state.pTz){ overlapEl.textContent='Pick a prospect time zone to see overlaps.'; return; }
-    const segs = computeOverlap();
-    if (!segs.length){ overlapEl.textContent='No overlap between selected hours.'; return; }
-    overlapEl.innerHTML = segs.map(chip).join(' ');
-  }
-
+  // ---- Render / wire sliders ----
   function render(){
     // Mirror both sliders
     rRange.value = state.repMins;
     pRange.value = state.repMins;
 
-    // Times
+    // Rep time **always** 12-hour
     rTime.textContent = fmt12(state.repMins);
+
     if (state.pTz){
       const conv = convert(state.repMins, state.repTz, state.pTz);
       state.pMins = conv.minutes;
       pTime.textContent = state.use24 ? fmt24(state.pMins) : fmt12(state.pMins);
 
-      // Day shift
+      // Day shift badge
       if (conv.dayOff !== 0){ badge.style.display='inline-block'; badge.textContent=(conv.dayOff>0?'+':'')+conv.dayOff+' day'; }
       else badge.style.display='none';
 
@@ -541,17 +307,15 @@
       diffEl.textContent = `${(d>0?'+':'')}${d} hrs`;
 
       updateProspectTickLabels();
-      updateOverlap();
     } else {
       pTime.textContent = '--:--'; badge.style.display='none';
       diffEl.textContent = '—';
-      setPTicks(['–','–','–']); overlapEl.textContent='Pick a prospect time zone to see overlaps.';
+      setPTicks(['–','–','–']);
       requestAnimationFrame(adjustTickLabels);
     }
   }
 
-  // Events (mirror BOTH ways)
-  rSelect.addEventListener('change', e=>{ state.repTz = e.target.value; updateProspectTickLabels(); updateOverlap(); render(); });
+  rSelect.addEventListener('change', e=>{ state.repTz = e.target.value; updateProspectTickLabels(); render(); });
   rRange.addEventListener('input', e=>{ state.repMins = +e.target.value; render(); });
   pRange.addEventListener('input', e=>{ state.repMins = +e.target.value; render(); });
 
@@ -559,16 +323,14 @@
     state.use24 = !state.use24;
     milBtn.classList.toggle('active', state.use24);
     milBtn.setAttribute('aria-pressed', String(state.use24));
-    updateProspectTickLabels(); updateOverlap(); render();
+    updateProspectTickLabels(); render();
   });
 
   // Hard guard: never let tick labels touch borders/lines (dynamic)
   function adjustTickLabels(){
-    const SAFE = 16; // min px gap from card edges
-    [document.getElementById('rTickWrap'), document.getElementById('pTickWrap')].forEach(wrap=>{
-      if (!wrap) return;
+    const SAFE = 16; // px gap from each side of the tick row
+    document.querySelectorAll('.tick-wrap').forEach(wrap=>{
       const spans = wrap.querySelectorAll('.ticks span');
-      if (!spans.length) return;
       spans.forEach(s=>s.style.transform=''); // reset base transforms
       const wr = wrap.getBoundingClientRect();
       spans.forEach(span=>{
@@ -582,25 +344,12 @@
   }
   window.addEventListener('resize', () => requestAnimationFrame(adjustTickLabels));
 
-  // Init — seed prospect with UK so flow is visible; set noon
-  (function init(){
-    // Business hours label
-    updateBhLabel();
-    // Prospect default
-    countryInput.value = 'United Kingdom';
-    // Use the direct zones path for UK
-    (function populateUK(){
-      const entry = COUNTRY_DATA['United Kingdom'];
-      const zs = entry?.zones || [];
-      zoneSelect.innerHTML = zs.map(z=>`<option value="${z}">${z}</option>`).join('');
-      zoneSelect.disabled = false;
-      zoneSelect.value = zs[0] || '';
-      state.pTz = zoneSelect.value || null;
-    })();
-    state.repMins = 12*60;
-    rRange.value = pRange.value = state.repMins;
-    render();
-  })();
+  // Init with sensible defaults
+  countryInput.value = 'United Kingdom';
+  state.pTz = COUNTRY_TZ['United Kingdom'];
+  state.repMins = 12*60;                    // 12:00 PM
+  rRange.value = pRange.value = state.repMins;
+  render();
 })();
 </script>
 </body>
