@@ -30,7 +30,7 @@
 
   .label{text-transform:uppercase;letter-spacing:.06em;color:#64748b;font-size:12px}
   .time-row{display:flex;align-items:center;gap:12px}
-  .time{font-size:24px;font-weight:800;white-space:nowrap;line-height:1} /* no wrap */
+  .time{font-size:24px;font-weight:800;white-space:nowrap;line-height:1} /* never wraps */
   .badge{font-size:12px;background:#f1f5f9;color:#334155;padding:2px 8px;border-radius:999px}
 
   .select{border:2px solid var(--border);padding:12px 14px;border-radius:12px;background:#fff;width:100%;font-size:15px;height:48px}
@@ -38,7 +38,7 @@
   .button.active{background:#0ea5e9;border-color:#0ea5e9;color:#fff}
   .button:focus,.select:focus{outline:3px solid var(--ring)}
 
-  /* sliders + ticks */
+  /* sliders + three ticks (25%, 50%, 75%) */
   .range{
     -webkit-appearance:none;appearance:none;width:100%;height:10px;border-radius:8px;background:#e5e7eb;outline:none;position:relative;
     background-image:
@@ -58,9 +58,13 @@
   .range::-moz-range-progress{height:10px;background:#0b66ff;border-radius:8px}
   .range::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#0b66ff;border:2px solid #fff}
 
-  /* keep labels away from borders; JS adds extra safety if needed */
-  .tick-wrap{padding-inline:48px} /* <- increased base padding */
-  .ticks{display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-top:8px;white-space:nowrap}
+  /* Keep labels away from borders; also asymmetrically pad near the inner card borders */
+  .tick-wrap{padding-inline:48px}                  /* base safe padding */
+  #pTickWrap{padding-right:68px}                   /* extra space away from inner vertical border */
+  #rTickWrap{padding-left:68px}                    /* extra space away from inner vertical border */
+
+  .ticks{display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-top:6px;white-space:nowrap}
+  /* base offsets so labels don't sit right on the tick lines */
   .ticks span{width:0;position:relative}
   .ticks span:first-child{transform:translateX(-10px)}
   .ticks span:nth-child(2){transform:translateX(0)}
@@ -68,7 +72,7 @@
 
   .overlap{margin-top:14px;padding:10px 12px;border:2px dashed #cbd5e1;border-radius:10px;background:#fafcff}
   .ov-title{font-weight:700;margin-bottom:6px}
-  .ov-row{font-size:14px;margin:6px 0;padding:6px 8px;border-radius:8px;
+  .ov-row{font-size:14px;margin:6px 6px 0 0;padding:6px 8px;border-radius:8px;
           color:var(--green);background:var(--green-bg);border:1px solid var(--green-br);display:inline-block}
 </style>
 </head>
@@ -79,7 +83,7 @@
     <div class="summary">
       <div>
         <div class="muted">Current difference</div>
-        <div id="diff" class="big">—</div>
+        <div id="diff" class="big">—</div>  <!-- only the number changes now -->
         <div class="muted">Drag either slider; the other mirrors exactly.</div>
 
         <div class="overlap">
@@ -213,8 +217,7 @@
       return state.use24 ? fmt24(m) : fmt12(m);
     });
     setPTicks(labels);
-    // safety: adjust away from borders/lines
-    requestAnimationFrame(adjustTickLabels);
+    requestAnimationFrame(adjustTickLabels); // safety: nudge away from any border/line
   }
 
   // Overlap (9–5 local both sides), 15-min granularity
@@ -263,59 +266,51 @@
       if (conv.dayOff !== 0){ badge.style.display='inline-block'; badge.textContent=(conv.dayOff>0?'+':'')+conv.dayOff+' day'; }
       else badge.style.display='none';
 
-      // Difference normalized to [-12,12]
+      // Difference normalized to [-12,12] — update ONLY the number now
       let d = (state.pMins - state.repMins)/60; d = Math.round(d*100)/100; if (d>12) d-=24; if (d<-12) d+=24;
-      diffEl.innerHTML = `<div class="muted">Current difference</div><div class="big">${(d>0?'+':'')}${d} hrs</div>`;
+      diffEl.textContent = `${(d>0?'+':'')}${d} hrs`;
 
       updateProspectTickLabels();
       updateOverlap();
     } else {
       pTime.textContent = '--:--'; badge.style.display='none';
-      diffEl.innerHTML = `<div class="muted">Current difference</div><div class="big">—</div>`;
+      diffEl.textContent = '—';
       setPTicks(['–','–','–']); overlapEl.textContent='Pick a prospect time zone to see overlaps.';
       requestAnimationFrame(adjustTickLabels);
     }
   }
 
-  // Events (mirror BOTH ways)
+  // Mirror BOTH ways
   rSelect.addEventListener('change', e=>{ state.repTz = e.target.value; updateProspectTickLabels(); updateOverlap(); render(); });
   pSelect.addEventListener('change', e=>{ state.pTz   = e.target.value; updateProspectTickLabels(); updateOverlap(); render(); });
-
   rRange.addEventListener('input', e=>{ state.repMins = +e.target.value; render(); });
   pRange.addEventListener('input', e=>{ state.repMins = +e.target.value; render(); });
 
-  milBtn.addEventListener('click', ()=>{
+  document.getElementById('milBtn').addEventListener('click', ()=>{
     state.use24 = !state.use24;
-    milBtn.classList.toggle('active', state.use24);
-    milBtn.setAttribute('aria-pressed', String(state.use24));
+    const b = document.getElementById('milBtn');
+    b.classList.toggle('active', state.use24);
+    b.setAttribute('aria-pressed', String(state.use24));
     updateProspectTickLabels(); updateOverlap(); render();
   });
 
-  // ---- Hard guard: never let tick labels touch borders/lines ----
+  // Hard guard: never let tick labels touch borders/lines (dynamic)
   function adjustTickLabels(){
-    // check both wrappers
+    const SAFE = 14; // minimum px gap from inner edges
     [document.getElementById('rTickWrap'), document.getElementById('pTickWrap')].forEach(wrap=>{
       if (!wrap) return;
-      const ticks = wrap.querySelectorAll('.ticks span');
-      if (!ticks.length) return;
+      const spans = wrap.querySelectorAll('.ticks span');
+      if (!spans.length) return;
 
-      // Reset any previous shifts
-      ticks.forEach(s=>s.style.transform='');
+      spans.forEach(s=>s.style.transform=''); // reset
+      const wr = wrap.getBoundingClientRect();
 
-      const wrapRect = wrap.getBoundingClientRect();
-      const SAFE = 8; // min distance from inner edge
-      ticks.forEach(span=>{
+      spans.forEach(span=>{
         const r = span.getBoundingClientRect();
-        // If label is too close/overlapping left inner edge
-        const leftOverlap = (wrapRect.left + SAFE) - r.left;
-        if (leftOverlap > 0){
-          span.style.transform = `translateX(${Math.ceil(leftOverlap)}px)`;
-        }
-        // If label is too close/overlapping right inner edge
-        const rightOverlap = r.right - (wrapRect.right - SAFE);
-        if (rightOverlap > 0){
-          span.style.transform = `translateX(-${Math.ceil(rightOverlap)}px)`;
-        }
+        let dx = 0;
+        if (r.left < wr.left + SAFE)  dx = (wr.left + SAFE) - r.left;
+        if (r.right > wr.right - SAFE) dx = -(r.right - (wr.right - SAFE));
+        if (dx) span.style.transform = `translateX(${dx}px)`;
       });
     });
   }
