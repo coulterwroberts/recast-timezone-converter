@@ -9,6 +9,7 @@
     --bg:#f8fafc; --card:#fff; --border:#0f172a; --text:#0f172a; --muted:#64748b;
     --orange:#f97316; --blue:#2563eb; --ring:#bae6fd;
     --green:#065f46; --green-bg:#ecfdf5; --green-br:#a7f3d0;
+    --tick-gap:12px; /* unified vertical gap under sliders */
   }
   *{box-sizing:border-box} html,body{height:100%;margin:0}
   body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,Noto Sans;
@@ -26,11 +27,12 @@
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
   @media(max-width:980px){.grid2{grid-template-columns:1fr}}
   .card{background:#fff;border:3px solid var(--border);border-radius:14px;padding:18px}
+  /* Fixed rows so time + slider rows align perfectly on both cards */
   .card-grid{display:grid;grid-template-rows:auto 64px 56px 80px;gap:14px}
 
   .label{text-transform:uppercase;letter-spacing:.06em;color:#64748b;font-size:12px}
   .time-row{display:flex;align-items:center;gap:12px}
-  .time{font-size:24px;font-weight:800;white-space:nowrap;line-height:1} /* never wraps */
+  .time{font-size:24px;font-weight:800;white-space:nowrap;line-height:1} /* never wrap “AM/PM” */
   .badge{font-size:12px;background:#f1f5f9;color:#334155;padding:2px 8px;border-radius:999px}
 
   .select{border:2px solid var(--border);padding:12px 14px;border-radius:12px;background:#fff;width:100%;font-size:15px;height:48px}
@@ -58,13 +60,23 @@
   .range::-moz-range-progress{height:10px;background:#0b66ff;border-radius:8px}
   .range::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#0b66ff;border:2px solid #fff}
 
-  /* Keep labels away from borders; also asymmetrically pad near the inner card borders */
-  .tick-wrap{padding-inline:48px}                  /* base safe padding */
-  #pTickWrap{padding-right:68px}                   /* extra space away from inner vertical border */
-  #rTickWrap{padding-left:68px}                    /* extra space away from inner vertical border */
+  /* Keep labels away from borders; add extra asymmetry near inner vertical borders */
+  .tick-wrap{padding-inline:48px}
+  #pTickWrap{padding-right:68px}  /* away from inner border */
+  #rTickWrap{padding-left:68px}
 
-  .ticks{display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-top:6px;white-space:nowrap}
-  /* base offsets so labels don't sit right on the tick lines */
+  /* unified layout under both sliders */
+  .ticks{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    font-size:12px;
+    color:#64748b;
+    margin-top:var(--tick-gap);
+    line-height:1;
+    white-space:nowrap;
+  }
+  /* base offsets so labels don’t sit on tick lines */
   .ticks span{width:0;position:relative}
   .ticks span:first-child{transform:translateX(-10px)}
   .ticks span:nth-child(2){transform:translateX(0)}
@@ -83,7 +95,7 @@
     <div class="summary">
       <div>
         <div class="muted">Current difference</div>
-        <div id="diff" class="big">—</div>  <!-- only the number changes now -->
+        <div id="diff" class="big">—</div>
         <div class="muted">Drag either slider; the other mirrors exactly.</div>
 
         <div class="overlap">
@@ -217,31 +229,48 @@
       return state.use24 ? fmt24(m) : fmt12(m);
     });
     setPTicks(labels);
-    requestAnimationFrame(adjustTickLabels); // safety: nudge away from any border/line
+    requestAnimationFrame(adjustTickLabels); // safety: nudge away from borders/lines
   }
 
   // Overlap (9–5 local both sides), 15-min granularity
   const W_START = 9*60, W_END = 17*60;
-  function inWin(m){ return m>=W_START && m<W_END; }
+  function inWin(m){ return m>=W_START && m<=W_END; }  // inclusive end so segments can end at 17:00
   function computeOverlap(){
     if (!state.pTz) return [];
     const segs=[]; let cur=null;
-    for (let m=0; m<1440; m+=15){
+    for (let m=0; m<=1440; m+=15){
       const p = convert(m, state.repTz, state.pTz);
       const ok = inWin(m) && inWin(p.minutes);
       if (ok){
-        if (!cur) cur={rs:m, ps:p.minutes, dss:p.dayOff, re:null, pe:null, dse:null};
-        cur.re=m+15; cur.pe=p.minutes; cur.dse=p.dayOff;
-      } else if (cur){ segs.push(cur); cur=null; }
+        if (!cur) cur={rs:m, re:null}; // keep rep-side boundaries only
+        cur.re = Math.min(m+15, W_END); // bound to 17:00 exactly
+      } else if (cur){
+        segs.push(cur); cur=null;
+      }
     }
     if (cur) segs.push(cur);
     return segs;
   }
   function chip(seg){
     const f = state.use24 ? fmt24 : fmt12;
-    const rep = `${f(seg.rs)}–${f(seg.re)}`;
-    const pro = `${f(seg.ps)}–${f(seg.pe)}${(seg.dss||seg.dse)?' '+((seg.dss>0||seg.dse>0)?'(+1 day)':'(-1 day)'):''}`;
-    return `<span class="ov-row">Rep ${rep} ↔ Prospect ${pro}</span>`;
+
+    const repStart = seg.rs;
+    const repEnd   = seg.re;
+
+    // Prospect start/end computed from Rep boundaries => ends exactly at 17:00 conversion
+    const pStartConv = convert(repStart, state.repTz, state.pTz);
+    const pEndConv   = convert(repEnd,   state.repTz, state.pTz);
+
+    const repLabel = `${f(repStart)}–${f(repEnd)}`;
+    const pLabel   = `${f(pStartConv.minutes)}–${f(pEndConv.minutes)}`;
+
+    // Day-shift badge if either edge crosses day boundary
+    let shiftTxt = '';
+    const s = pStartConv.dayOff, e = pEndConv.dayOff;
+    if (s !== 0 || e !== 0){
+      shiftTxt = ` ${(s > 0 || e > 0) ? '(+1 day)' : '(-1 day)'}`;
+    }
+    return `<span class="ov-row">Rep ${repLabel} ↔ Prospect ${pLabel}${shiftTxt}</span>`;
   }
   function updateOverlap(){
     if (!state.pTz){ overlapEl.textContent='Pick a prospect time zone to see overlaps.'; return; }
@@ -266,7 +295,7 @@
       if (conv.dayOff !== 0){ badge.style.display='inline-block'; badge.textContent=(conv.dayOff>0?'+':'')+conv.dayOff+' day'; }
       else badge.style.display='none';
 
-      // Difference normalized to [-12,12] — update ONLY the number now
+      // Difference normalized to [-12,12]
       let d = (state.pMins - state.repMins)/60; d = Math.round(d*100)/100; if (d>12) d-=24; if (d<-12) d+=24;
       diffEl.textContent = `${(d>0?'+':'')}${d} hrs`;
 
@@ -280,17 +309,17 @@
     }
   }
 
-  // Mirror BOTH ways
+  // Events (mirror BOTH ways)
   rSelect.addEventListener('change', e=>{ state.repTz = e.target.value; updateProspectTickLabels(); updateOverlap(); render(); });
   pSelect.addEventListener('change', e=>{ state.pTz   = e.target.value; updateProspectTickLabels(); updateOverlap(); render(); });
+
   rRange.addEventListener('input', e=>{ state.repMins = +e.target.value; render(); });
   pRange.addEventListener('input', e=>{ state.repMins = +e.target.value; render(); });
 
-  document.getElementById('milBtn').addEventListener('click', ()=>{
+  milBtn.addEventListener('click', ()=>{
     state.use24 = !state.use24;
-    const b = document.getElementById('milBtn');
-    b.classList.toggle('active', state.use24);
-    b.setAttribute('aria-pressed', String(state.use24));
+    milBtn.classList.toggle('active', state.use24);
+    milBtn.setAttribute('aria-pressed', String(state.use24));
     updateProspectTickLabels(); updateOverlap(); render();
   });
 
@@ -302,9 +331,10 @@
       const spans = wrap.querySelectorAll('.ticks span');
       if (!spans.length) return;
 
-      spans.forEach(s=>s.style.transform=''); // reset
-      const wr = wrap.getBoundingClientRect();
+      // reset first
+      spans.forEach(s=>s.style.transform='');
 
+      const wr = wrap.getBoundingClientRect();
       spans.forEach(span=>{
         const r = span.getBoundingClientRect();
         let dx = 0;
