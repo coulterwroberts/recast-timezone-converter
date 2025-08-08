@@ -1,50 +1,38 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Time Zone Converter</title>
 <style>
   :root{
     --bg:#f8fafc; --card:#fff; --border:#0f172a; --text:#0f172a; --muted:#64748b;
-    --orange:#f97316; --blue:#2563eb; --ring:#bae6fd;
-    --tick-gap:12px; /* unified vertical gap under sliders */
+    --orange:#f97316; --blue:#2563eb; --ring:#bae6fd; --tick-gap:14px;
   }
   *{box-sizing:border-box} html,body{height:100%;margin:0}
   body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,Noto Sans;
        background:linear-gradient(#fff,var(--bg));color:var(--text)}
-  .container{max-width:1100px;margin:40px auto;padding:28px;background:var(--card);
+  .container{max-width:1100px;margin:40px auto;padding:28px;background:#fff;
              border:6px solid var(--orange);border-radius:18px;box-shadow:0 8px 28px rgba(2,6,23,.08)}
   h1{margin:8px 0 18px;font-size:30px}
 
-  /* Two cards side-by-side; stack on mobile */
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
   @media(max-width:980px){.grid2{grid-template-columns:1fr}}
 
   .card{background:#fff;border:3px solid var(--border);border-radius:14px;padding:18px}
   .label{text-transform:uppercase;letter-spacing:.06em;color:#64748b;font-size:12px;margin-bottom:8px}
-
-  /* fixed rows inside each card so times/sliders align perfectly */
-  .card-grid{display:grid;grid-template-rows:auto 56px 64px 56px;gap:10px}
-
   .select,.input{border:2px solid var(--border);padding:10px 12px;border-radius:12px;background:#fff;width:100%;font-size:15px;height:44px}
-  .button{border:2px solid var(--border);padding:9px 14px;border-radius:12px;background:#fff;font-weight:700;cursor:pointer;height:44px}
-  .button.active{background:#0ea5e9;border-color:#0ea5e9;color:#fff}
-  .button:focus,.select:focus,.input:focus{outline:3px solid var(--ring)}
-
-  .time-row{display:flex;align-items:center;gap:12px}
+  .input:focus,.select:focus{outline:3px solid var(--ring)}
+  .time-row{display:flex;align-items:center;gap:12px;margin-top:4px}
   .time{font-size:28px;font-weight:800;white-space:nowrap;line-height:1}
+  .badge{font-size:12px;border:2px solid #cbd5e1;border-radius:999px;padding:2px 8px;color:#334155;display:none}
 
-  /* sliders + three ticks (25%, 50%, 75%) */
+  /* slider track with three dashes */
   .range{
     -webkit-appearance:none;appearance:none;width:100%;height:10px;border-radius:8px;background:#e5e7eb;outline:none;position:relative;
-    background-image:
-      linear-gradient(#0f172a,#0f172a),
-      linear-gradient(#0f172a,#0f172a),
-      linear-gradient(#0f172a,#0f172a);
-    background-size:2px 16px,2px 16px,2px 16px;
-    background-repeat:no-repeat;
-    background-position:25% 50%, 50% 50%, 75% 50%;
+    background-image:linear-gradient(#0f172a,#0f172a),linear-gradient(#0f172a,#0f172a),linear-gradient(#0f172a,#0f172a);
+    background-size:2px 16px,2px 16px,2px 16px; background-repeat:no-repeat;
+    background-position:25% 50%,50% 50%,75% 50%;
   }
   .range::-webkit-slider-runnable-track{height:10px;border-radius:8px;background:transparent}
   .range::-webkit-slider-thumb{
@@ -55,25 +43,24 @@
   .range::-moz-range-progress{height:10px;background:#0b66ff;border-radius:8px}
   .range::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#0b66ff;border:2px solid #fff}
 
-  /* symmetric padding so left/right labels line up identically */
+  /* Keep tick labels directly UNDER the line & symmetric */
   .tick-wrap{padding-inline:84px}
-  .ticks{
-    display:flex;justify-content:space-between;align-items:flex-start;
-    font-size:12px;color:#64748b;margin-top:var(--tick-gap);line-height:1;white-space:nowrap
-  }
+  .ticks{display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;color:#64748b;
+         margin-top:var(--tick-gap);line-height:1;white-space:nowrap}
   .ticks span{width:0;position:relative}
   .ticks span:first-child{transform:translateX(-10px)}
   .ticks span:nth-child(2){transform:translateX(0)}
   .ticks span:last-child{transform:translateX(10px)}
 
-  /* Summary block pinned to bottom */
+  /* bottom summary */
   .summary{margin-top:20px;border:3px solid var(--blue);border-radius:14px;padding:16px;background:#fff;text-align:center}
   .muted{color:var(--muted);font-size:15px;line-height:1.35}
   .big{font-size:32px;font-weight:800;margin:2px 0 6px}
 
-  /* Country search dropdown (simple, accessible) */
+  /* simple country dropdown list */
   .box{position:relative}
-  .listbox{position:absolute;z-index:30;background:#fff;border:2px solid #cbd5e1;border-radius:10px;max-height:260px;overflow:auto;box-shadow:0 10px 24px rgba(2,6,23,.12);left:0;right:0}
+  .listbox{position:absolute;z-index:30;background:#fff;border:2px solid #cbd5e1;border-radius:10px;max-height:260px;overflow:auto;
+           box-shadow:0 10px 24px rgba(2,6,23,.12);left:0;right:0}
   .option{padding:8px 12px;cursor:pointer}
   .option[aria-selected="true"], .option:hover{background:#eff6ff}
 </style>
@@ -83,56 +70,46 @@
     <h1>Time Zone Converter</h1>
 
     <div class="grid2">
-      <!-- REP (always AM/PM) -->
+      <!-- REP (AM/PM always) -->
       <div class="card">
-        <div class="card-grid">
-          <div>
-            <div class="label">Rep’s Timezone</div>
-            <select id="rSelect" class="select">
-              <option value="America/Los_Angeles">Pacific</option>
-              <option value="America/Denver">Mountain</option>
-              <option value="America/Chicago" selected>Central</option>
-              <option value="America/New_York">Eastern</option>
-            </select>
-          </div>
+        <div class="label">Rep’s Timezone</div>
+        <select id="rSelect" class="select">
+          <option value="America/Los_Angeles">Pacific</option>
+          <option value="America/Denver">Mountain</option>
+          <option value="America/Chicago" selected>Central</option>
+          <option value="America/New_York">Eastern</option>
+        </select>
 
-          <div class="time-row">
-            <span id="rTime" class="time">--:--</span>
-          </div>
+        <div class="time-row"><span id="rTime" class="time">--:--</span></div>
 
-          <div class="tick-wrap">
-            <input id="rRange" class="range" type="range" min="0" max="1439" step="15"/>
-            <div class="ticks" id="rTicks"><span>6 AM</span><span>12 PM</span><span>6 PM</span></div>
-          </div>
+        <div class="tick-wrap">
+          <input id="rRange" class="range" type="range" min="0" max="1439" step="15"/>
+          <div class="ticks" id="rTicks"><span>6 AM</span><span>12 PM</span><span>6 PM</span></div>
         </div>
       </div>
 
-      <!-- PROSPECT (AM/PM by default; toggle to 24h) -->
+      <!-- PROSPECT (single dropdown; AM/PM by default; 24h toggle removed per “only dropdown present”) -->
       <div class="card">
-        <div class="card-grid">
-          <div>
-            <div class="label">Prospect’s Country</div>
-            <div class="box">
-              <input id="countryInput" class="input" placeholder="Type country name" autocomplete="off" aria-autocomplete="list" aria-controls="countryList" />
-              <div id="countryList" class="listbox" role="listbox" style="display:none"></div>
-            </div>
-          </div>
+        <div class="label">Prospect’s Timezone</div>
+        <div class="box">
+          <input id="countryInput" class="input" placeholder="United Kingdom (type to filter)" autocomplete="off"
+                 aria-autocomplete="list" aria-controls="countryList" />
+          <div id="countryList" class="listbox" role="listbox" style="display:none"></div>
+        </div>
 
-          <div class="time-row">
-            <span id="pTime" class="time">--:--</span>
-            <button id="milBtn" class="button" aria-pressed="false">Military time</button>
-            <span id="badge" style="display:none;border:2px solid #cbd5e1;border-radius:999px;padding:2px 8px;font-size:12px;color:#334155;">+1 day</span>
-          </div>
+        <div class="time-row">
+          <span id="pTime" class="time">--:--</span>
+          <span id="badge" class="badge">+1 day</span>
+        </div>
 
-          <div class="tick-wrap">
-            <input id="pRange" class="range" type="range" min="0" max="1439" step="15"/>
-            <div class="ticks" id="pTicks"><span>–</span><span>–</span><span>–</span></div>
-          </div>
+        <div class="tick-wrap">
+          <input id="pRange" class="range" type="range" min="0" max="1439" step="15"/>
+          <div class="ticks" id="pTicks"><span>–</span><span>–</span><span>–</span></div>
         </div>
       </div>
     </div>
 
-    <!-- SUMMARY AT THE BOTTOM -->
+    <!-- bottom summary -->
     <div class="summary">
       <div class="muted">Current difference</div>
       <div id="diff" class="big">—</div>
@@ -142,7 +119,7 @@
 
 <script>
 (() => {
-  // Country -> "primary" business time zone (capital / most common)
+  /* Country -> primary business time zone (kept simple) */
   const COUNTRY_TZ = {
     "United States":"America/New_York","Canada":"America/Toronto","United Kingdom":"Europe/London","Ireland":"Europe/Dublin",
     "Italy":"Europe/Rome","Romania":"Europe/Bucharest","Germany":"Europe/Berlin","France":"Europe/Paris","Spain":"Europe/Madrid",
@@ -159,16 +136,13 @@
   };
   const COUNTRIES = Object.keys(COUNTRY_TZ).sort();
 
-  // ==== DST-safe conversion helpers ====
+  // DST-safe helpers
   const BASE = new Date();
   const pad = n => (n<10?'0':'')+n;
   const clamp = n => ((n%1440)+1440)%1440;
-
   function parts(d, tz){
-    const f = new Intl.DateTimeFormat('en-US',{
-      timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit',
-      hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false
-    });
+    const f = new Intl.DateTimeFormat('en-US',{ timeZone:tz, year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
     const m={}; f.formatToParts(d).forEach(p=>m[p.type]=p.value);
     return {year:+m.year,month:+m.month,day:+m.day,hour:+m.hour,minute:+m.minute,second:+m.second};
   }
@@ -193,163 +167,101 @@
     return {minutes:clamp(tp.hour*60+tp.minute), dayOff};
   }
   const fmt12 = m => { const h=Math.floor(m/60),mm=m%60,ap=h>=12?'PM':'AM',h12=((h+11)%12)+1; return h12+':'+pad(mm)+' '+ap; };
-  const fmt24 = m => pad(Math.floor(m/60))+':'+pad(m%60);
 
-  // ==== Elements ====
+  // Elements
   const rSelect = document.getElementById('rSelect');
   const rRange  = document.getElementById('rRange');
   const rTime   = document.getElementById('rTime');
-
   const countryInput = document.getElementById('countryInput');
   const countryList  = document.getElementById('countryList');
-
   const pRange  = document.getElementById('pRange');
   const pTime   = document.getElementById('pTime');
   const badge   = document.getElementById('badge');
   const diffEl  = document.getElementById('diff');
-  const milBtn  = document.getElementById('milBtn');
 
-  // ==== State ====
-  let state = {
-    repTz: rSelect.value,
-    repMins: 720,   // 12:00 PM start
-    pTz: null,
-    pMins: null,
-    use24: false    // controls **prospect** display only
-  };
+  // State
+  let state = { repTz:rSelect.value, repMins:12*60, pTz:null, pMins:null };
 
-  // ---- Country search (fuzzy) ----
-  function fuzzyScore(q, s){
-    q=q.toLowerCase(); s=s.toLowerCase();
-    let i=0,score=0;
-    for (let c of s){ if (i<q.length && c===q[i]){ score+=2; i++; } else score+= (q.includes(c)?1:0); }
-    if (s.startsWith(q)) score+=3;
-    return (i===q.length)?score:-1;
+  // Fuzzy country list
+  function fuzzyScore(q, s){ q=q.toLowerCase(); s=s.toLowerCase(); let i=0,score=0;
+    for (let c of s){ if (i<q.length && c===q[i]){ score+=2; i++; } else score+=(q.includes(c)?1:0); }
+    if (s.startsWith(q)) score+=3; return (i===q.length)?score:-1;
   }
   function renderCountryList(q){
-    const items = q?COUNTRIES
-      .map(c=>({c,score:fuzzyScore(q,c)}))
-      .filter(x=>x.score>=0)
-      .sort((a,b)=>b.score-a.score).map(x=>x.c)
-      : COUNTRIES;
+    const items = q?COUNTRIES.map(c=>({c,score:fuzzyScore(q,c)})).filter(x=>x.score>=0).sort((a,b)=>b.score-a.score).map(x=>x.c) : COUNTRIES;
     countryList.innerHTML = items.map((c,i)=>`<div class="option" role="option" data-value="${c}" ${i===0?'aria-selected="true"':''}>${c}</div>`).join('');
     countryList.style.display = items.length ? 'block':'none';
   }
-  let activeIdx = 0;
-  function moveActive(delta){
-    const opts = [...countryList.querySelectorAll('.option')];
-    if (!opts.length) return;
-    opts[activeIdx]?.removeAttribute('aria-selected');
-    activeIdx = (activeIdx + delta + opts.length) % opts.length;
-    opts[activeIdx].setAttribute('aria-selected','true');
-    opts[activeIdx].scrollIntoView({block:'nearest'});
-  }
-  function chooseActive(){
-    const opt = countryList.querySelector('.option[aria-selected="true"]');
-    if (opt) chooseCountry(opt.dataset.value);
-  }
-  countryInput.addEventListener('focus', ()=>renderCountryList(countryInput.value.trim()));
-  countryInput.addEventListener('input', e=>{ activeIdx=0; renderCountryList(e.target.value.trim()); });
-  countryInput.addEventListener('keydown', e=>{
-    if (e.key==='ArrowDown'){ e.preventDefault(); moveActive(1); }
-    else if (e.key==='ArrowUp'){ e.preventDefault(); moveActive(-1); }
-    else if (e.key==='Enter'){ e.preventDefault(); chooseActive(); }
-    else if (e.key==='Escape'){ countryList.style.display='none'; }
+  let activeIdx=0;
+  function moveActive(d){ const opts=[...countryList.querySelectorAll('.option')]; if(!opts.length)return;
+    opts[activeIdx]?.removeAttribute('aria-selected'); activeIdx=(activeIdx+d+opts.length)%opts.length;
+    opts[activeIdx].setAttribute('aria-selected','true'); opts[activeIdx].scrollIntoView({block:'nearest'}); }
+  function chooseActive(){ const o=countryList.querySelector('.option[aria-selected="true"]'); if(o) chooseCountry(o.dataset.value); }
+  countryInput.addEventListener('focus',()=>renderCountryList(countryInput.value.trim()));
+  countryInput.addEventListener('input',e=>{activeIdx=0;renderCountryList(e.target.value.trim());});
+  countryInput.addEventListener('keydown',e=>{
+    if(e.key==='ArrowDown'){e.preventDefault();moveActive(1);} else if(e.key==='ArrowUp'){e.preventDefault();moveActive(-1);}
+    else if(e.key==='Enter'){e.preventDefault();chooseActive();} else if(e.key==='Escape'){countryList.style.display='none';}
   });
-  countryList.addEventListener('click', e=>{
-    const el = e.target.closest('.option'); if (el) chooseCountry(el.dataset.value);
-  });
-
+  countryList.addEventListener('click',e=>{const el=e.target.closest('.option'); if(el) chooseCountry(el.dataset.value);});
   function chooseCountry(name){
-    countryInput.value = name;
-    countryList.style.display = 'none';
-    const tz = COUNTRY_TZ[name] || null;
-    state.pTz = tz;
-    updateProspectTickLabels(); render();
+    countryInput.value=name; countryList.style.display='none';
+    state.pTz = COUNTRY_TZ[name] || null; updatePTicks(); render();
   }
 
-  // ---- Tick labels ----
-  const REP_TICKS = [360,720,1080]; // 6,12,6
-  function setPTicks(a){
-    const el=document.getElementById('pTicks');
-    el.children[0].textContent=a[0]; el.children[1].textContent=a[1]; el.children[2].textContent=a[2];
-  }
-  function updateProspectTickLabels(){
-    if (!state.pTz){ setPTicks(['–','–','–']); requestAnimationFrame(adjustTickLabels); return; }
-    const labels = REP_TICKS.map(mins=>{
-      const m = convert(mins, state.repTz, state.pTz).minutes;
-      return state.use24 ? fmt24(m) : fmt12(m);
-    });
-    setPTicks(labels);
-    requestAnimationFrame(adjustTickLabels);
+  // Ticks (ensure both sides match & sit under line)
+  const REP_TICKS=[360,720,1080];
+  function setPTicks(labels){ const el=document.getElementById('pTicks'); el.children[0].textContent=labels[0]; el.children[1].textContent=labels[1]; el.children[2].textContent=labels[2]; }
+  function updatePTicks(){
+    if(!state.pTz){ setPTicks(['–','–','–']); requestAnimationFrame(guardTickEdges); return; }
+    const labels = REP_TICKS.map(m => fmt12(convert(m,state.repTz,state.pTz).minutes));
+    setPTicks(labels); requestAnimationFrame(guardTickEdges);
   }
 
-  // ---- Render / wire sliders ----
+  // Rendering
   function render(){
-    // Mirror both sliders
-    rRange.value = state.repMins;
-    pRange.value = state.repMins;
-
-    // Rep time **always** 12-hour
+    rRange.value = state.repMins; pRange.value = state.repMins;
     rTime.textContent = fmt12(state.repMins);
 
-    if (state.pTz){
-      const conv = convert(state.repMins, state.repTz, state.pTz);
-      state.pMins = conv.minutes;
-      pTime.textContent = state.use24 ? fmt24(state.pMins) : fmt12(state.pMins);
-
-      // Day shift badge
-      if (conv.dayOff !== 0){ badge.style.display='inline-block'; badge.textContent=(conv.dayOff>0?'+':'')+conv.dayOff+' day'; }
-      else badge.style.display='none';
-
-      // Difference normalized to [-12,12]
-      let d = (state.pMins - state.repMins)/60; d = Math.round(d*100)/100; if (d>12) d-=24; if (d<-12) d+=24;
+    if(state.pTz){
+      const conv=convert(state.repMins,state.repTz,state.pTz); state.pMins=conv.minutes;
+      pTime.textContent = fmt12(state.pMins);
+      badge.style.display = conv.dayOff!==0 ? 'inline-block':'none';
+      if(conv.dayOff!==0) badge.textContent=(conv.dayOff>0?'+':'')+conv.dayOff+' day';
+      let d=(state.pMins-state.repMins)/60; d=Math.round(d*100)/100; if(d>12)d-=24; if(d<-12)d+=24;
       diffEl.textContent = `${(d>0?'+':'')}${d} hrs`;
-
-      updateProspectTickLabels();
-    } else {
-      pTime.textContent = '--:--'; badge.style.display='none';
-      diffEl.textContent = '—';
-      setPTicks(['–','–','–']);
-      requestAnimationFrame(adjustTickLabels);
+      updatePTicks();
+    }else{
+      pTime.textContent='--:--'; badge.style.display='none'; diffEl.textContent='—'; setPTicks(['–','–','–']); requestAnimationFrame(guardTickEdges);
     }
   }
 
-  rSelect.addEventListener('change', e=>{ state.repTz = e.target.value; updateProspectTickLabels(); render(); });
-  rRange.addEventListener('input', e=>{ state.repMins = +e.target.value; render(); });
-  pRange.addEventListener('input', e=>{ state.repMins = +e.target.value; render(); });
+  rSelect.addEventListener('change',e=>{state.repTz=e.target.value; updatePTicks(); render();});
+  rRange.addEventListener('input',e=>{state.repMins=+e.target.value; render();});
+  pRange.addEventListener('input',e=>{state.repMins=+e.target.value; render();});
 
-  milBtn.addEventListener('click', ()=>{
-    state.use24 = !state.use24;
-    milBtn.classList.toggle('active', state.use24);
-    milBtn.setAttribute('aria-pressed', String(state.use24));
-    updateProspectTickLabels(); render();
-  });
-
-  // Hard guard: never let tick labels touch borders/lines (dynamic)
-  function adjustTickLabels(){
-    const SAFE = 16; // px gap from each side of the tick row
+  // Keep tick labels away from edges and ALWAYS under the line
+  function guardTickEdges(){
+    const SAFE=16;
     document.querySelectorAll('.tick-wrap').forEach(wrap=>{
-      const spans = wrap.querySelectorAll('.ticks span');
-      spans.forEach(s=>s.style.transform=''); // reset base transforms
-      const wr = wrap.getBoundingClientRect();
+      const spans=wrap.querySelectorAll('.ticks span'); spans.forEach(s=>s.style.transform='');
+      const wr=wrap.getBoundingClientRect();
       spans.forEach(span=>{
-        const r = span.getBoundingClientRect();
-        let dx = 0;
-        if (r.left < wr.left + SAFE)  dx = (wr.left + SAFE) - r.left;
-        if (r.right > wr.right - SAFE) dx = -(r.right - (wr.right - SAFE));
-        if (dx) span.style.transform = `translateX(${dx}px)`;
+        const r=span.getBoundingClientRect(); let dx=0;
+        if(r.left<wr.left+SAFE) dx=(wr.left+SAFE)-r.left;
+        if(r.right>wr.right-SAFE) dx=-(r.right-(wr.right-SAFE));
+        if(dx) span.style.transform=`translateX(${dx}px)`;
       });
     });
   }
-  window.addEventListener('resize', () => requestAnimationFrame(adjustTickLabels));
+  window.addEventListener('resize',()=>requestAnimationFrame(guardTickEdges));
 
-  // Init with sensible defaults
-  countryInput.value = 'United Kingdom';
+  // Defaults
+  countryInput.value='United Kingdom';
   state.pTz = COUNTRY_TZ['United Kingdom'];
-  state.repMins = 12*60;                    // 12:00 PM
+  state.repMins = 12*60;
   rRange.value = pRange.value = state.repMins;
-  render();
+  updatePTicks(); render();
 })();
 </script>
 </body>
