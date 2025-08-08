@@ -8,6 +8,7 @@
   :root{
     --bg:#f8fafc; --card:#fff; --border:#0f172a; --text:#0f172a; --muted:#64748b;
     --orange:#f97316; --blue:#2563eb; --ring:#bae6fd;
+    --green:#065f46; --green-bg:#ecfdf5; --green-br:#a7f3d0;
   }
   *{box-sizing:border-box} html,body{height:100%;margin:0}
   body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,Noto Sans;
@@ -26,20 +27,21 @@
   @media(max-width:980px){.grid2{grid-template-columns:1fr}}
   .card{background:#fff;border:3px solid var(--border);border-radius:14px;padding:18px}
   /* Fixed row heights so time + slider rows are perfectly aligned */
-  .card-grid{display:grid;grid-template-rows:auto 64px 56px 72px;gap:14px}
+  .card-grid{display:grid;grid-template-rows:auto 64px 56px 80px;gap:14px}
 
   .label{text-transform:uppercase;letter-spacing:.06em;color:#64748b;font-size:12px}
   .time-row{display:flex;align-items:center;gap:12px}
-  .time{font-size:24px;font-weight:800;white-space:nowrap;margin-right:auto}
+  .time{font-size:24px;font-weight:800;white-space:nowrap;line-height:1} /* NEVER wrap “PM” */
   .badge{font-size:12px;background:#f1f5f9;color:#334155;padding:2px 8px;border-radius:999px}
 
-  .select,.input{border:2px solid var(--border);padding:12px 14px;border-radius:12px;background:#fff;width:100%;font-size:15px}
-  .select{height:48px}
+  .select{border:2px solid var(--border);padding:12px 14px;border-radius:12px;background:#fff;width:100%;font-size:15px;height:48px}
+  .button{border:2px solid var(--border);padding:9px 14px;border-radius:12px;background:#fff;font-weight:700;cursor:pointer}
+  .button.active{background:#0ea5e9;border-color:#0ea5e9;color:#fff}
+  .button:focus,.select:focus{outline:3px solid var(--ring)}
 
-  /* sliders (track + ticks + thumb) */
+  /* sliders */
   .range{
     -webkit-appearance:none;appearance:none;width:100%;height:10px;border-radius:8px;background:#e5e7eb;outline:none;position:relative;
-    /* three ticks @ 25%, 50%, 75% */
     background-image:
       linear-gradient(#0f172a,#0f172a),
       linear-gradient(#0f172a,#0f172a),
@@ -57,17 +59,19 @@
   .range::-moz-range-progress{height:10px;background:#0b66ff;border-radius:8px}
   .range::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#0b66ff;border:2px solid #fff}
 
-  .tick-wrap{padding-inline:14px} /* keep labels away from card borders */
-  .ticks{display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-top:6px}
-  /* prevent label overlap with the vertical tick line / border */
+  /* Keep labels away from borders so they never touch */
+  .tick-wrap{padding-inline:28px} /* increased padding to guarantee gap to black border */
+  .ticks{display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-top:8px;white-space:nowrap}
+  /* prevent label overlap with tick line/border */
   .ticks span{width:0;position:relative}
-  .ticks span:first-child{transform:translateX(-8px)}
+  .ticks span:first-child{transform:translateX(-10px)}
   .ticks span:nth-child(2){transform:translateX(0)}
-  .ticks span:last-child{transform:translateX(8px)}
+  .ticks span:last-child{transform:translateX(10px)}
 
   .overlap{margin-top:14px;padding:10px 12px;border:2px dashed #cbd5e1;border-radius:10px;background:#fafcff}
   .ov-title{font-weight:700;margin-bottom:6px}
-  .ov-row{font-size:14px;color:#0f172a;margin:2px 0}
+  .ov-row{font-size:14px;margin:6px 0;padding:6px 8px;border-radius:8px;
+          color:var(--green);background:var(--green-bg);border:1px solid var(--green-br);display:inline-block}
 </style>
 </head>
 <body>
@@ -95,7 +99,7 @@
 
             <div class="time-row">
               <span id="pTime" class="time">--:--</span>
-              <button id="milBtn" class="select" style="width:auto;padding:8px 12px;font-weight:700">Military time</button>
+              <button id="milBtn" class="button" aria-pressed="false">Military time</button>
               <span id="badge" class="badge" style="display:none"></span>
             </div>
 
@@ -131,7 +135,7 @@
 
 <script>
 (() => {
-  // ===== Robust DST-safe conversion helpers =====
+  // ==== DST-safe conversion helpers ====
   const BASE = new Date();
   const pad = n => (n<10?'0':'')+n;
   const clamp = n => ((n%1440)+1440)%1440;
@@ -167,7 +171,7 @@
   const fmt12 = m => { const h=Math.floor(m/60),mm=m%60,ap=h>=12?'PM':'AM',h12=((h+11)%12)+1; return h12+':'+pad(mm)+' '+ap; };
   const fmt24 = m => pad(Math.floor(m/60))+':'+pad(m%60);
 
-  // ===== Elements =====
+  // ==== Elements ====
   const rSelect = document.getElementById('rSelect');
   const pSelect = document.getElementById('pSelect');
   const rRange  = document.getElementById('rRange');
@@ -179,7 +183,7 @@
   const overlapEl = document.getElementById('overlap');
   const milBtn  = document.getElementById('milBtn');
 
-  // Fill Prospect select with all IANA zones (or leave as-is if not supported)
+  // Prospect select with all IANA zones
   try{
     if (Intl.supportedValuesOf){
       const all = Intl.supportedValuesOf('timeZone');
@@ -190,7 +194,7 @@
     }
   }catch(_){}
 
-  // ===== State =====
+  // ==== State ====
   let state = {
     repTz: rSelect.value,
     repMins: 720,   // start at 12:00 PM
@@ -213,7 +217,7 @@
     setPTicks(labels);
   }
 
-  // Overlap (9–5 local)
+  // Overlap (9–5 local both sides), 15-min granularity
   const W_START = 9*60, W_END = 17*60;
   function inWin(m){ return m>=W_START && m<W_END; }
   function computeOverlap(){
@@ -230,21 +234,21 @@
     if (cur) segs.push(cur);
     return segs;
   }
-  function fmtOverlap(seg){
-    const l = state.use24 ? fmt24 : fmt12;
-    const rep = `${l(seg.rs)}–${l(seg.re)}`;
-    const pro = `${l(seg.ps)}–${l(seg.pe)}${(seg.dss||seg.dse)?' ('+((seg.dss>0||seg.dse>0)?'+':'')+'1 day)':''}`;
-    return `Rep ${rep} ↔ Prospect ${pro}`;
+  function chip(seg){
+    const f = state.use24 ? fmt24 : fmt12;
+    const rep = `${f(seg.rs)}–${f(seg.re)}`;
+    const pro = `${f(seg.ps)}–${f(seg.pe)}${(seg.dss||seg.dse)?' '+((seg.dss>0||seg.dse>0)?'(+1 day)':'(-1 day)'):''}`;
+    return `<span class="ov-row">Rep ${rep} ↔ Prospect ${pro}</span>`;
   }
   function updateOverlap(){
-    const segs = computeOverlap();
     if (!state.pTz){ overlapEl.textContent='Pick a prospect time zone to see overlaps.'; return; }
+    const segs = computeOverlap();
     if (!segs.length){ overlapEl.textContent='No overlap between 9–5 windows today.'; return; }
-    overlapEl.innerHTML = segs.map(s=>`<div class="ov-row">${fmtOverlap(s)}</div>`).join('');
+    overlapEl.innerHTML = segs.map(chip).join(' ');
   }
 
   function render(){
-    // Mirror the thumbs (both ways)
+    // Mirror both sliders
     rRange.value = state.repMins;
     pRange.value = state.repMins;
 
@@ -255,13 +259,12 @@
       state.pMins = conv.minutes;
       pTime.textContent = state.use24 ? fmt24(state.pMins) : fmt12(state.pMins);
 
-      // day shift badge
+      // Day shift
       if (conv.dayOff !== 0){ badge.style.display='inline-block'; badge.textContent=(conv.dayOff>0?'+':'')+conv.dayOff+' day'; }
       else badge.style.display='none';
 
-      // difference (normalize to [-12,12])
-      let d = (state.pMins - state.repMins)/60;
-      d = Math.round(d*100)/100; if (d>12) d-=24; if (d<-12) d+=24;
+      // Difference normalized to [-12,12]
+      let d = (state.pMins - state.repMins)/60; d = Math.round(d*100)/100; if (d>12) d-=24; if (d<-12) d+=24;
       diffEl.innerHTML = `<div class="muted">Current difference</div><div class="big">${(d>0?'+':'')}${d} hrs</div>`;
 
       updateProspectTickLabels();
