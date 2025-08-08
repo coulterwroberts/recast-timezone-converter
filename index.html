@@ -1,94 +1,328 @@
-import React, { useMemo, useState } from "react";
-
-/**
- * FIX: The canvas file was set to `code/react` but contained Markdown text.
- * That caused the bundler to try to parse `**` and plain text as JavaScript,
- * throwing `SyntaxError: /: Unexpected token (1:0)`.
- *
- * This replaces it with a valid React component that renders the same
- * instructions as UI. No Markdown in code. Also includes simple self-tests.
- */
-
-// Tiny helper for copy-to-clipboard
-async function copy(text) {
-  try { await navigator.clipboard.writeText(text); return true; } catch { return false; }
-}
-
-function CodeBox({ title, code }) {
-  const [ok, setOk] = useState(false);
-  return (
-    <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, overflow: "hidden", background: "#fff", marginTop: 8 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "#f8fafc", borderBottom: "1px solid #e5e7eb" }}>
-        <div style={{ fontSize: 12, color: "#334155", textTransform: "uppercase", letterSpacing: ".06em" }}>{title}</div>
-        <button onClick={async () => setOk(await copy(code))} style={{ fontSize: 12, border: "1px solid #e5e7eb", borderRadius: 6, padding: "4px 8px", background: "white", cursor: "pointer" }}>{ok ? "Copied" : "Copy"}</button>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Time Zone Converter</title>
+<meta name="description" content="Dual-slider time zone converter for sales teams">
+<style>
+  :root{--bg:#f8fafc;--card:#fff;--border:#e5e7eb;--text:#0f172a;--muted:#64748b;--ring:#bae6fd}
+  *{box-sizing:border-box}html,body{height:100%;margin:0}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,Noto Sans,"Apple Color Emoji","Segoe UI Emoji";
+       background:linear-gradient(#fff,var(--bg));color:var(--text)}
+  .container{max-width:1000px;margin:32px auto;padding:24px;background:var(--card);border:1px solid var(--border);
+             border-radius:16px;box-shadow:0 4px 16px rgba(2,6,23,.04)}
+  .header{display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand img{height:40px;width:auto}
+  h1{margin:8px 0 0;font-size:26px}
+  .controls{display:flex;align-items:center;gap:12px}
+  .switch{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+  .switch input{width:42px;height:24px}
+  .swap{border:1px solid var(--border);background:#fff;border-radius:8px;padding:8px 12px;cursor:pointer}
+  .swap:focus{outline:2px solid var(--ring)}
+  .summary{border:2px solid var(--border);border-radius:12px;padding:20px;display:grid;grid-template-columns:1fr 2fr;gap:16px}
+  @media(max-width:800px){.summary{grid-template-columns:1fr}}
+  .muted{color:var(--muted);font-size:14px}.big{font-size:28px;font-weight:600}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:800px){.grid2{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px}
+  .label{text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-size:12px;margin-bottom:8px}
+  .time{font-size:20px;font-weight:600}
+  .badge{margin-left:8px;font-size:12px;background:#f1f5f9;color:#334155;padding:2px 8px;border-radius:999px}
+  .combo{position:relative}
+  .search{display:flex;align-items:center;gap:8px;border:1px solid var(--border);padding:8px 10px;border-radius:8px;background:#fff}
+  .search input{border:none;outline:none;width:100%;font-size:14px}
+  .listbox{position:absolute;top:calc(100% + 6px);left:0;right:0;max-height:280px;overflow:auto;background:#fff;border:1px solid var(--border);
+           border-radius:8px;box-shadow:0 8px 24px rgba(2,6,23,.08);z-index:40}
+  .option{width:100%;text-align:left;padding:8px 10px;font-size:14px;cursor:pointer;background:#fff;border:none}
+  .option:hover,.option.active{background:#f8fafc}
+  .range{width:100%}
+  .quick{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .btn{border:1px solid var(--border);background:#fff;border-radius:8px;padding:6px 10px;font-size:14px;cursor:pointer}
+  .btn:focus{outline:2px solid var(--ring)}
+  .footer-note{color:var(--muted);font-size:12px;margin-top:8px}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="brand">
+        <img src="./logo.png" alt="Recast Software" onerror="this.style.display='none'">
+        <h1>Time Zone Converter</h1>
       </div>
-      <pre style={{ margin: 0, padding: 12, fontSize: 13, lineHeight: 1.45, overflowX: "auto" }}><code>{code}</code></pre>
+      <div class="controls">
+        <label class="switch"><span>24-hour</span>
+          <input id="toggle-24h" type="checkbox">
+          <span>12-hour*</span>
+        </label>
+        <button id="swap" class="swap">Swap</button>
+      </div>
     </div>
-  );
-}
+    <div class="muted" style="margin-top:-4px">
+      *When 12-hour is selected, zones that commonly use 24-hour still display in 24-hour locally.
+    </div>
 
-function Step({ n, title, children }) {
-  return (
-    <section style={{ marginBottom: 18 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{ width: 28, height: 28, borderRadius: 999, background: "#0ea5e9", color: "white", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{n}</div>
-        <h3 style={{ margin: 0 }}>{title}</h3>
+    <div class="summary" style="margin-top:16px">
+      <div>
+        <div class="muted">Current difference</div>
+        <div id="diff" class="big">0 hrs</div>
+        <div class="muted" style="margin-top:8px">
+          Drag the Rep slider; Prospect updates instantly. Use Swap to flip roles.
+        </div>
       </div>
-      <div style={{ marginTop: 8 }}>{children}</div>
-    </section>
-  );
-}
 
-export default function DeployInstructions() {
-  const repo = "recast-timezone-converter";
-  const commands = [
-    "git init",
-    "git add .",
-    'git commit -m "Initial commit"',
-    "git branch -M main",
-    `git remote add origin https://github.com/YOUR-USERNAME/${repo}.git`,
-    "git push -u origin main",
+      <div class="grid2">
+        <div class="card">
+          <div class="label">Rep</div>
+          <div class="combo" id="rep-combo"></div>
+          <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between">
+            <div class="time"><span id="rep-time">--:--</span></div>
+          </div>
+          <div style="margin-top:10px">
+            <input id="rep-range" class="range" type="range" min="0" max="1439" step="15">
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="label">Prospect</div>
+          <div class="combo" id="prospect-combo"></div>
+          <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between">
+            <div class="time"><span id="prospect-time">--:--</span></div>
+            <span id="badge" class="badge" style="display:none"></span>
+          </div>
+          <div style="margin-top:10px">
+            <input id="prospect-range" class="range" type="range" min="0" max="1439" step="15" disabled>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quick">
+      <span class="muted">Quick set:</span>
+      <span id="quick"></span>
+      <button class="btn" id="now">Now</button>
+    </div>
+
+    <div class="footer-note">
+      Day badge shows if converted time lands on a different calendar day in the prospect’s time zone.
+    </div>
+  </div>
+
+<script>
+(() => {
+  const BASE_DATE = new Date();
+  const clamp = n => ((n % 1440) + 1440) % 1440;
+  const pad = n => String(n).padStart(2,'0');
+
+  function parts(d, tz){
+    const dtf = new Intl.DateTimeFormat('en-US',{
+      timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false
+    });
+    const m = Object.fromEntries(dtf.formatToParts(d).map(p=>[p.type,p.value]));
+    return {year:+m.year, month:+m.month, day:+m.day, hour:+m.hour, minute:+m.minute, second:+m.second};
+  }
+  function offsetMin(tz, d){
+    const p = parts(d, tz);
+    const asUTC = Date.UTC(p.year,p.month-1,p.day,p.hour,p.minute,p.second);
+    return (asUTC - d.getTime())/60000;
+  }
+  function localToUTC({year,month,day,hour,minute}, tz){
+    let guess = Date.UTC(year,month-1,day,hour,minute,0);
+    let o = offsetMin(tz, new Date(guess));
+    let utc = guess - o*60000;
+    o = offsetMin(tz, new Date(utc));
+    return new Date(Date.UTC(year,month-1,day,hour,minute,0) - o*60000);
+  }
+  function convert(mins, fromTz, toTz){
+    const fp = parts(BASE_DATE, fromTz);
+    const h = Math.floor(mins/60), m = mins%60;
+    const utc = localToUTC({year:fp.year,month:fp.month,day:fp.day,hour:h,minute:m}, fromTz);
+    const tp = parts(utc, toTz);
+    const target = tp.hour*60 + tp.minute;
+    const fromMidUTC = localToUTC({year:fp.year,month:fp.month,day:fp.day,hour:0,minute:0}, fromTz);
+    const toAtFromMid = parts(fromMidUTC, toTz);
+    const dayOff = Math.round(
+      (Date.UTC(tp.year,tp.month-1,tp.day) - Date.UTC(toAtFromMid.year,toAtFromMid.month-1,toAtFromMid.day))/(24*3600*1000)
+    );
+    return { minutes: clamp(target), dayOff };
+  }
+
+  const ALL_TZ = (Intl.supportedValuesOf && Intl.supportedValuesOf('timeZone')) || [
+    'America/Los_Angeles','America/Denver','America/Chicago','America/New_York',
+    'Europe/London','Europe/Berlin','Europe/Paris','Asia/Kolkata','Asia/Shanghai','Asia/Tokyo','Australia/Sydney'
   ];
+  const Z24 = new Set(['Europe/London','Europe/Berlin','Europe/Paris','Europe/Madrid','Europe/Rome','Europe/Amsterdam','Europe/Oslo','Europe/Stockholm','Europe/Helsinki','Asia/Kolkata','Asia/Shanghai','Asia/Tokyo','Australia/Sydney','America/Sao_Paulo','Asia/Dubai','Africa/Johannesburg']);
+  const prefers24 = tz => Z24.has(tz);
 
-  // Self-tests to ensure the content is sane
-  const tests = useMemo(() => {
-    return [
-      { name: "No Markdown asterisks at line start", ok: ![...commands, `cd /path/to/${repo}`].some(l => /^\*\*/.test(l)) },
-      { name: "Contains remote add origin", ok: commands.join("\n").includes("git remote add origin https://github.com/") },
-      { name: "Sequence begins with git init", ok: commands[0].startsWith("git init") },
-    ];
-  }, []);
+  function label(mins, use12, tz){
+    const h = Math.floor(mins/60), m = mins%60;
+    const force24 = (!use12) || prefers24(tz);
+    if (force24) return `${pad(h)}:${pad(m)}`;
+    const p = h>=12 ? 'PM' : 'AM';
+    const h12 = ((h+11)%12)+1;
+    return `${h12}:${pad(m)} ${p}`;
+  }
 
-  const allGreen = tests.every(t => t.ok);
+  const HINTS = new Map([
+    ['usa',['America/New_York','America/Chicago','America/Denver','America/Los_Angeles','America/Phoenix','America/Anchorage','Pacific/Honolulu']],
+    ['united states',['America/New_York','America/Chicago','America/Denver','America/Los_Angeles','America/Phoenix','America/Anchorage','Pacific/Honolulu']],
+    ['uk',['Europe/London']], ['united kingdom',['Europe/London']],
+    ['india',['Asia/Kolkata']], ['china',['Asia/Shanghai']], ['japan',['Asia/Tokyo']],
+    ['australia',['Australia/Sydney','Australia/Brisbane','Australia/Adelaide','Australia/Perth','Australia/Darwin','Australia/Melbourne']],
+    ['canada',['America/Toronto','America/Winnipeg','America/Edmonton','America/Vancouver','America/Halifax','America/St_Johns']],
+  ]);
 
-  return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(#fff,#f8fafc)", padding: 24 }}>
-      <div style={{ maxWidth: 840, margin: "0 auto", background: "#fff", border: "1px solid #e5e7eb", borderRadius: 16, boxShadow: "0 4px 16px rgba(2,6,23,.05)", padding: 20 }}>
-        <h2 style={{ marginTop: 0 }}>Push your folder to a new GitHub repository</h2>
-        <div style={{ color: allGreen ? "#065f46" : "#991b1b", fontSize: 12, marginBottom: 12 }}>Self‑tests: {allGreen ? "all passing" : "needs attention"}</div>
-
-        <Step n={1} title="Create the repo on GitHub">
-          <ol>
-            <li>Go to <a href="https://github.com/new" target="_blank" rel="noreferrer">github.com/new</a></li>
-            <li>Name it <code>{repo}</code> (don’t add README/.gitignore)</li>
-            <li>Click <strong>Create repository</strong></li>
-          </ol>
-        </Step>
-
-        <Step n={2} title="Open Terminal and go to the project folder">
-          <CodeBox title="Change directory" code={`cd /path/to/${repo}`} />
-        </Step>
-
-        <Step n={3} title="Run these commands (replace YOUR-USERNAME)">
-          <CodeBox title="Git commands" code={commands.join("\n")} />
-        </Step>
-
-        <Step n={4} title="Verify">
-          <div>Refresh the repo page; you should see your files.</div>
-        </Step>
-
-        <div style={{ marginTop: 18, color: "#64748b" }}>Next: import this repo in Vercel → Build: <code>npm run build</code> → Output: <code>dist</code> → Deploy.</div>
+  function makeCombo(rootId, initialTz, onChange){
+    const root = document.getElementById(rootId);
+    root.innerHTML = `
+      <div class="search">
+        <input type="text" placeholder="Type a country or time zone..." aria-label="Search timezone">
+        <div class="muted current"></div>
       </div>
-    </div>
-  );
-}
+      <div class="listbox" style="display:none"></div>
+    `;
+    const input = root.querySelector('input');
+    const current = root.querySelector('.current');
+    const list = root.querySelector('.listbox');
+
+    let value = initialTz;
+    current.textContent = fmtLabel(value);
+
+    function fmtLabel(tz){
+      const p = tz.split('/'); return `${p[0]} — ${p.slice(1).join('/').replaceAll('_',' ')} (${tz})`;
+    }
+
+    function computeList(q){
+      const s = q.trim().toLowerCase();
+      let base = ALL_TZ.slice();
+      if (s && HINTS.has(s)){
+        const set = new Set(HINTS.get(s));
+        const hinted = base.filter(tz => set.has(tz));
+        const rest = base.filter(tz => !set.has(tz));
+        base = hinted.concat(rest);
+      }
+      const filtered = s
+        ? base.filter(tz => tz.toLowerCase().includes(s) || fmtLabel(tz).toLowerCase().includes(s))
+        : base;
+      return filtered.slice(0, 300);
+    }
+
+    function open(){
+      const q = input.value;
+      const rows = computeList(q);
+      list.innerHTML = rows.map((tz,i)=>`<button class="option" data-idx="${i}" data-tz="${tz}">${fmtLabel(tz)}</button>`).join('') ||
+                       `<div class="muted" style="padding:8px 10px">No matches.</div>`;
+      list.style.display = 'block';
+    }
+    function close(){ list.style.display = 'none'; }
+
+    root.addEventListener('click', e => e.stopPropagation());
+    document.addEventListener('click', () => close());
+
+    input.addEventListener('focus', open);
+    input.addEventListener('input', open);
+    list.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-tz]');
+      if (!btn) return;
+      value = btn.dataset.tz;
+      current.textContent = fmtLabel(value);
+      input.value = '';
+      close();
+      onChange(value);
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') close();
+      if (e.key === 'Enter') {
+        const first = list.querySelector('[data-tz]');
+        if (first) first.click();
+      }
+    });
+
+    return {
+      get value(){ return value; },
+      set value(v){ value=v; current.textContent = fmtLabel(v); onChange(v); }
+    };
+  }
+
+  const repRange = document.getElementById('rep-range');
+  const prospectRange = document.getElementById('prospect-range');
+  const repTime = document.getElementById('rep-time');
+  const prospectTime = document.getElementById('prospect-time');
+  const badge = document.getElementById('badge');
+  const diff = document.getElementById('diff');
+  const toggle24 = document.getElementById('toggle-24h');
+  const swap = document.getElementById('swap');
+  const quick = document.getElementById('quick');
+  const nowBtn = document.getElementById('now');
+
+  const repCombo = makeCombo('rep-combo', 'America/Chicago', tz => update({repTz: tz}));
+  const prospectCombo = makeCombo('prospect-combo', 'Europe/London', tz => update({prospectTz: tz}));
+
+  let state = {
+    repTz: repCombo.value,
+    prospectTz: prospectCombo.value,
+    repMins: 9*60,
+    prospectMins: convert(9*60, repCombo.value, prospectCombo.value).minutes,
+  };
+  repRange.value = state.repMins;
+  prospectRange.value = state.prospectMins;
+  toggle24.checked = true; // default to 24h display
+
+  function labelFor(m, tz){
+    const use12 = !toggle24.checked;
+    return label(m, use12, tz);
+  }
+
+  function update(patch = {}){
+    state = {...state, ...patch};
+    const conv = convert(state.repMins, state.repTz, state.prospectTz);
+    state.prospectMins = conv.minutes;
+
+    repTime.textContent = labelFor(state.repMins, state.repTz);
+    prospectTime.textContent = labelFor(state.prospectMins, state.prospectTz);
+
+    if (conv.dayOff !== 0){
+      badge.style.display = 'inline-block';
+      badge.textContent = (conv.dayOff > 0 ? '+' : '') + conv.dayOff + ' day';
+    } else {
+      badge.style.display = 'none';
+    }
+
+    repRange.value = state.repMins;
+    prospectRange.value = state.prospectMins;
+
+    let d = (state.prospectMins - state.repMins)/60;
+    d = Math.round(d*100)/100;
+    if (d > 12) d -= 24;
+    if (d < -12) d += 24;
+    diff.textContent = (d>0?'+':'') + d + ' hrs';
+  }
+
+  repRange.addEventListener('input', e => update({repMins: +e.target.value}));
+  toggle24.addEventListener('change', () => update({}));
+  swap.addEventListener('click', () => {
+    const a = state.repTz, b = state.prospectTz;
+    const am = state.repMins, bm = state.prospectMins;
+    repCombo.value = b;
+    prospectCombo.value = a;
+    update({repTz: b, prospectTz: a, repMins: bm});
+  });
+
+  [8,9,10,11,12,13,14,15,16].forEach(h => {
+    const btn = document.createElement('button');
+    btn.className = 'btn';
+    btn.textContent = `${h}:00 Rep`;
+    btn.addEventListener('click', () => update({repMins: h*60}));
+    quick.appendChild(btn);
+  });
+  nowBtn.addEventListener('click', () => {
+    const n = new Date(); update({repMins: n.getHours()*60 + n.getMinutes()});
+  });
+
+  update({});
+})();
+</script>
+</body>
+</html>
