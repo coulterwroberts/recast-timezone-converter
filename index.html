@@ -9,53 +9,75 @@
     --bg:#f8fafc; --card:#fff; --border:#0f172a; --text:#0f172a; --muted:#64748b;
     --orange:#f97316; --blue:#2563eb; --ring:#bae6fd;
   }
-  *{box-sizing:border-box}
-  html,body{height:100%;margin:0}
+  *{box-sizing:border-box} html,body{height:100%;margin:0}
   body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,Noto Sans;
-       background:linear-gradient(#fff,var(--bg)); color:var(--text)}
-  .container{max-width:1200px; margin:40px auto; padding:28px; background:var(--card);
-             border:6px solid var(--orange); border-radius:18px; box-shadow:0 8px 28px rgba(2,6,23,.08)}
-  h1{margin:8px 0 18px; font-size:30px}
+       background:linear-gradient(#fff,var(--bg));color:var(--text)}
+  .container{max-width:1200px;margin:40px auto;padding:28px;background:var(--card);
+             border:6px solid var(--orange);border-radius:18px;box-shadow:0 8px 28px rgba(2,6,23,.08)}
+  h1{margin:8px 0 18px;font-size:30px}
 
-  .summary{border:3px solid var(--blue); border-radius:14px; padding:22px;
-           display:grid; grid-template-columns:1.1fr 2fr; gap:18px; background:#fff}
+  .summary{border:3px solid var(--blue);border-radius:14px;padding:22px;
+           display:grid;grid-template-columns:1.1fr 2fr;gap:18px;background:#fff}
   @media(max-width:980px){.summary{grid-template-columns:1fr}}
-  .muted{color:var(--muted); font-size:15px}
-  .big{font-size:32px; font-weight:800}
+  .muted{color:var(--muted);font-size:15px}
+  .big{font-size:32px;font-weight:800}
 
-  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:18px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
   @media(max-width:980px){.grid2{grid-template-columns:1fr}}
-  .card{background:#fff; border:3px solid var(--border); border-radius:14px; padding:18px}
-  /* Fixed row heights so times/sliders always align */
-  .card-grid{display:grid; grid-template-rows:auto 64px 56px 56px; gap:14px}
+  .card{background:#fff;border:3px solid var(--border);border-radius:14px;padding:18px}
+  /* Fixed row heights so time + slider rows are perfectly aligned */
+  .card-grid{display:grid;grid-template-rows:auto 64px 56px 56px;gap:14px}
 
-  .label{text-transform:uppercase; letter-spacing:.06em; color:#64748b; font-size:12px}
-  .time-row{display:flex; align-items:center; gap:12px}
-  .time{font-size:24px; font-weight:800; white-space:nowrap; margin-right:auto}
-  .badge{font-size:12px; background:#f1f5f9; color:#334155; padding:2px 8px; border-radius:999px}
+  .label{text-transform:uppercase;letter-spacing:.06em;color:#64748b;font-size:12px}
+  .time-row{display:flex;align-items:center;gap:12px}
+  .time{font-size:24px;font-weight:800;white-space:nowrap;margin-right:auto}
+  .badge{font-size:12px;background:#f1f5f9;color:#334155;padding:2px 8px;border-radius:999px}
 
-  .select,.input{border:2px solid var(--border); padding:12px 14px; border-radius:12px; background:#fff; width:100%; font-size:15px}
+  .select,.input{border:2px solid var(--border);padding:12px 14px;border-radius:12px;background:#fff;width:100%;font-size:15px}
   .select{height:48px}
-  .range{width:100%}
 
-  .toggle{border:2px solid var(--border); background:#fff; border-radius:12px; padding:9px 14px;
-          font-size:14px; cursor:pointer; font-weight:700}
-  .toggle:disabled{opacity:.45; cursor:not-allowed}
-  .toggle.active{background:#0ea5e9; border-color:#0ea5e9; color:#fff}
-  .toggle:focus,.input:focus,.select:focus{outline:3px solid var(--ring)}
+  /* sliders (track + ticks + thumb) */
+  .range{
+    -webkit-appearance:none;appearance:none;width:100%;height:10px;border-radius:8px;background:#e5e7eb;outline:none;position:relative;
+    /* three ticks @ 25%, 50%, 75% */
+    background-image:
+      linear-gradient(#0f172a,#0f172a),
+      linear-gradient(#0f172a,#0f172a),
+      linear-gradient(#0f172a,#0f172a);
+    background-size:2px 16px,2px 16px,2px 16px;
+    background-repeat:no-repeat;
+    background-position:25% 50%,50% 50%,75% 50%;
+  }
+  .range::-webkit-slider-runnable-track{height:10px;border-radius:8px;background:transparent}
+  .range::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;
+    background:#0b66ff;border:2px solid #fff;margin-top:-6px;box-shadow:0 0 0 1px rgba(0,0,0,.2)
+  }
+  .range::-moz-range-track{height:10px;border-radius:8px;background:transparent}
+  .range::-moz-range-progress{height:10px;background:#0b66ff;border-radius:8px}
+  .range::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#0b66ff;border:2px solid #fff}
+  .range.mirror{pointer-events:none}
+
+  .ticks{display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-top:6px}
+  .ticks span{width:0;transform:translateX(-1px)}
+  .ticks span:nth-child(2){transform:translateX(0)}
+  .ticks span:last-child{transform:translateX(1px)}
 
   /* Prospect combobox dropdown */
   .combo{position:relative}
   .dropdown{
-    position:absolute; left:0; right:0; top:calc(100% + 6px);
-    background:#fff; border:2px solid var(--border); border-radius:12px;
-    max-height:300px; overflow:auto; box-shadow:0 14px 34px rgba(2,6,23,.12);
-    z-index:50; display:none;
+    position:absolute;left:0;right:0;top:calc(100% + 6px);
+    background:#fff;border:2px solid var(--border);border-radius:12px;
+    max-height:300px;overflow:auto;box-shadow:0 14px 34px rgba(2,6,23,.12);
+    z-index:50;display:none
   }
-  .row{padding:10px 14px; cursor:pointer; font-size:15px}
-  .row:hover, .row.active{background:#f8fafc}
-  .row.disabled{color:#94a3b8; cursor:default}
-  .hint{font-size:12px; color:#64748b; padding:6px 14px}
+  .row{padding:10px 14px;cursor:pointer;font-size:15px}
+  .row:hover,.row.active{background:#f8fafc}
+  .hint{font-size:12px;color:#64748b;padding:6px 14px}
+  .toggle{border:2px solid var(--border);background:#fff;border-radius:12px;padding:9px 14px;font-size:14px;cursor:pointer;font-weight:700}
+  .toggle:disabled{opacity:.45;cursor:not-allowed}
+  .toggle.active{background:#0ea5e9;border-color:#0ea5e9;color:#fff}
+  .toggle:focus,.input:focus,.select:focus{outline:3px solid var(--ring)}
 </style>
 </head>
 <body>
@@ -66,33 +88,17 @@
       <div>
         <div class="muted">Current difference</div>
         <div id="diff" class="big">—</div>
-        <div class="muted" style="margin-top:8px">Drag the Rep slider; Prospect updates instantly.</div>
+        <div class="muted" style="margin-top:8px">Drag the left slider; the right one mirrors exactly.</div>
       </div>
 
       <div class="grid2">
-        <!-- REP -->
-        <div class="card">
-          <div class="card-grid">
-            <div class="label">Rep’s Timezone</div>
-            <select id="repSelect" class="select" aria-label="Select timezone">
-              <option value="America/Los_Angeles">Pacific</option>
-              <option value="America/Denver">Mountain</option>
-              <option value="America/Chicago" selected>Central</option>
-              <option value="America/New_York">Eastern</option>
-            </select>
-            <div class="time-row"><span id="repTime" class="time">--:--</span></div>
-            <input id="repRange" class="range" type="range" min="0" max="1439" step="15" />
-          </div>
-        </div>
-
-        <!-- PROSPECT -->
+        <!-- PROSPECT (left) -->
         <div class="card">
           <div class="card-grid">
             <div class="label">Prospect’s Timezone</div>
 
             <div class="combo">
-              <input id="pInput" class="input" placeholder="Type Country or City…" autocomplete="off"
-                     aria-label="Type to search country/city/time zone"/>
+              <input id="pInput" class="input" placeholder="Type Country or City…" autocomplete="off" aria-label="Type to search country/city/time zone"/>
               <div id="pDrop" class="dropdown"></div>
             </div>
 
@@ -102,7 +108,30 @@
               <span id="badge" class="badge" style="display:none"></span>
             </div>
 
-            <input id="pRange" class="range" type="range" min="0" max="1439" step="15" disabled />
+            <div>
+              <input id="pRange" class="range mirror" type="range" min="0" max="1439" step="15" disabled/>
+              <div class="ticks" id="pTicks"><span>–</span><span>–</span><span>–</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- REP (right) -->
+        <div class="card">
+          <div class="card-grid">
+            <div class="label">Rep’s Timezone</div>
+            <select id="repSelect" class="select" aria-label="Select timezone">
+              <option value="America/Los_Angeles">Pacific</option>
+              <option value="America/Denver">Mountain</option>
+              <option value="America/Chicago" selected>Central</option>
+              <option value="America/New_York">Eastern</option>
+            </select>
+
+            <div class="time-row"><span id="repTime" class="time">--:--</span></div>
+
+            <div>
+              <input id="repRange" class="range" type="range" min="0" max="1439" step="15"/>
+              <div class="ticks"><span>6 AM</span><span>12 PM</span><span>6 PM</span></div>
+            </div>
           </div>
         </div>
       </div>
@@ -111,108 +140,82 @@
 
 <script>
 (() => {
-  // ============== DST-safe conversion helpers ==============
+  // ===== Helpers (DST-safe) =====
   const BASE = new Date();
   const pad = n => (n<10?'0':'')+n;
   const clamp = n => ((n%1440)+1440)%1440;
 
   function parts(d, tz){
-    const dtf = new Intl.DateTimeFormat('en-US',{
-      timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit',
-      hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false
-    });
-    const m = {}; dtf.formatToParts(d).forEach(p=>m[p.type]=p.value);
-    return {year:+m.year, month:+m.month, day:+m.day, hour:+m.hour, minute:+m.minute, second:+m.second};
+    const f = new Intl.DateTimeFormat('en-US',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit',
+      hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+    const m = {}; f.formatToParts(d).forEach(p=>m[p.type]=p.value);
+    return {year:+m.year,month:+m.month,day:+m.day,hour:+m.hour,minute:+m.minute,second:+m.second};
   }
-  function offsetMin(tz, d){
-    const p = parts(d, tz);
-    const asUTC = Date.UTC(p.year,p.month-1,p.day,p.hour,p.minute,p.second);
+  function offsetMin(tz,d){
+    const p=parts(d,tz); const asUTC=Date.UTC(p.year,p.month-1,p.day,p.hour,p.minute,p.second);
     return (asUTC - d.getTime())/60000;
   }
-  function localToUTC({year,month,day,hour,minute}, tz){
+  function localToUTC({year,month,day,hour,minute},tz){
     let guess = Date.UTC(year,month-1,day,hour,minute,0);
-    let o = offsetMin(tz, new Date(guess));
+    let o = offsetMin(tz,new Date(guess));
     let utc = guess - o*60000;
-    o = offsetMin(tz, new Date(utc));
+    o = offsetMin(tz,new Date(utc));
     return new Date(Date.UTC(year,month-1,day,hour,minute,0) - o*60000);
   }
   function convert(mins, fromTz, toTz){
-    const fp = parts(BASE, fromTz);
-    const utc = localToUTC({year:fp.year,month:fp.month,day:fp.day,hour:Math.floor(mins/60),minute:mins%60}, fromTz);
-    const tp = parts(utc, toTz);
-    const atFromMid = parts(localToUTC({year:fp.year,month:fp.month,day:fp.day,hour:0,minute:0}, fromTz), toTz);
-    const dayOff = Math.round((Date.UTC(tp.year,tp.month-1,tp.day)-Date.UTC(atFromMid.year,atFromMid.month-1,atFromMid.day))/(24*3600*1000));
-    return {minutes: clamp(tp.hour*60+tp.minute), dayOff};
+    const fp=parts(BASE,fromTz);
+    const utc=localToUTC({year:fp.year,month:fp.month,day:fp.day,hour:Math.floor(mins/60),minute:mins%60},fromTz);
+    const tp=parts(utc,toTz);
+    const atFromMid=parts(localToUTC({year:fp.year,month:fp.month,day:fp.day,hour:0,minute:0},fromTz),toTz);
+    const dayOff=Math.round((Date.UTC(tp.year,tp.month-1,tp.day)-Date.UTC(atFromMid.year,atFromMid.month-1,atFromMid.day))/(24*3600*1000));
+    return {minutes:clamp(tp.hour*60+tp.minute), dayOff};
   }
-  const fmt12 = m => {
-    const h=Math.floor(m/60), mm=m%60, ap=h>=12?'PM':'AM', h12=((h+11)%12)+1;
-    return h12+':'+pad(mm)+' '+ap;
-  };
+  const fmt12 = m => { const h=Math.floor(m/60),mm=m%60,ap=h>=12?'PM':'AM',h12=((h+11)%12)+1; return h12+':'+pad(mm)+' '+ap; };
   const fmt24 = m => pad(Math.floor(m/60))+':'+pad(m%60);
-  const labelTZ = tz => {
-    const p = tz.split('/'); return p[0]+' — '+p.slice(1).join('/').replace(/_/g,' ')+' ('+tz+')';
-  };
+  const labelTZ = tz => { const p=tz.split('/'); return p[0]+' — '+p.slice(1).join('/').replace(/_/g,' ')+' ('+tz+')'; };
 
-  // ============== Data: countries & multi-zone expansion ==============
-  const ALL_TZ = (Intl.supportedValuesOf && Intl.supportedValuesOf('timeZone')) || [
-    'Europe/London','Europe/Paris','Europe/Berlin','Europe/Rome','Europe/Bucharest','America/New_York','America/Chicago','America/Denver','America/Los_Angeles'
-  ];
+  // ===== Data for search =====
+  function allTZ(){
+    try{ if (Intl.supportedValuesOf) return Intl.supportedValuesOf('timeZone'); }catch(e){}
+    return ['Europe/London','Europe/Rome','Europe/Bucharest','America/New_York','America/Chicago','America/Denver','America/Los_Angeles'];
+  }
+  const ALL_TZ = allTZ();
 
-  // Countries with one primary zone
-  const SINGLE_ZONE = new Map([
+  // Countries → primary zone (extendable)
+  const COUNTRY_TZ = new Map([
+    // Europe (includes Romania/Italy/UK etc.)
     ['Romania','Europe/Bucharest'], ['Italy','Europe/Rome'], ['United Kingdom','Europe/London'],
-    ['France','Europe/Paris'], ['Germany','Europe/Berlin'], ['Spain','Europe/Madrid'],
-    ['Portugal','Europe/Lisbon'], ['Ireland','Europe/Dublin'],
-    ['Japan','Asia/Tokyo'], ['South Korea','Asia/Seoul'], ['Singapore','Asia/Singapore'],
+    ['France','Europe/Paris'], ['Germany','Europe/Berlin'], ['Spain','Europe/Madrid'], ['Portugal','Europe/Lisbon'],
+    ['Ireland','Europe/Dublin'], ['Poland','Europe/Warsaw'], ['Greece','Europe/Athens'], ['Netherlands','Europe/Amsterdam'],
+    ['Belgium','Europe/Brussels'], ['Sweden','Europe/Stockholm'], ['Norway','Europe/Oslo'], ['Finland','Europe/Helsinki'],
+    ['Denmark','Europe/Copenhagen'], ['Switzerland','Europe/Zurich'], ['Austria','Europe/Vienna'], ['Czech Republic','Europe/Prague'],
+    ['Hungary','Europe/Budapest'], ['Ukraine','Europe/Kyiv'], ['Turkey','Europe/Istanbul'],
+    // Americas
+    ['United States','America/New_York'], ['Canada','America/Toronto'], ['Mexico','America/Mexico_City'],
+    ['Brazil','America/Sao_Paulo'], ['Argentina','America/Argentina/Buenos_Aires'], ['Chile','America/Santiago'],
+    ['Colombia','America/Bogota'], ['Peru','America/Lima'],
+    // Africa
+    ['South Africa','Africa/Johannesburg'], ['Egypt','Africa/Cairo'], ['Nigeria','Africa/Lagos'], ['Kenya','Africa/Nairobi'],
+    // Asia/Oceania
+    ['India','Asia/Kolkata'], ['China','Asia/Shanghai'], ['Japan','Asia/Tokyo'], ['South Korea','Asia/Seoul'],
+    ['Singapore','Asia/Singapore'], ['Hong Kong','Asia/Hong_Kong'], ['Taiwan','Asia/Taipei'], ['Thailand','Asia/Bangkok'],
+    ['United Arab Emirates','Asia/Dubai'], ['Israel','Asia/Jerusalem'], ['Saudi Arabia','Asia/Riyadh'],
+    ['Australia','Australia/Sydney'], ['New Zealand','Pacific/Auckland']
   ]);
 
-  // Countries with many zones -> expand to specific zone choices
-  const MULTI_ZONE = new Map([
-    ['Canada', [
-      {label:'Pacific — Vancouver', tz:'America/Vancouver'},
-      {label:'Yukon — Whitehorse', tz:'America/Whitehorse'},
-      {label:'Mountain — Edmonton', tz:'America/Edmonton'},
-      {label:'Central — Winnipeg', tz:'America/Winnipeg'},
-      {label:'Central (no DST) — Regina', tz:'America/Regina'},
-      {label:'Eastern — Toronto', tz:'America/Toronto'},
-      {label:'Atlantic — Halifax', tz:'America/Halifax'},
-      {label:'Newfoundland — St. John’s', tz:'America/St_Johns'},
-      {label:'Northwest Territories — Yellowknife', tz:'America/Yellowknife'},
-      {label:'Nunavut — Iqaluit', tz:'America/Iqaluit'}
-    ]],
-    ['United States', [
-      {label:'Eastern — New York', tz:'America/New_York'},
-      {label:'Central — Chicago', tz:'America/Chicago'},
-      {label:'Mountain — Denver', tz:'America/Denver'},
-      {label:'Arizona — Phoenix (no DST)', tz:'America/Phoenix'},
-      {label:'Pacific — Los Angeles', tz:'America/Los_Angeles'},
-      {label:'Alaska — Anchorage', tz:'America/Anchorage'},
-      {label:'Hawaii — Honolulu', tz:'Pacific/Honolulu'}
-    ]],
-    ['Mexico', [
-      {label:'Central — Mexico City', tz:'America/Mexico_City'},
-      {label:'Southeast — Cancun', tz:'America/Cancun'},
-      {label:'Pacific — Tijuana', tz:'America/Tijuana'}
-    ]],
-    ['Australia', [
-      {label:'New South Wales — Sydney', tz:'Australia/Sydney'},
-      {label:'Victoria — Melbourne', tz:'Australia/Melbourne'},
-      {label:'Queensland — Brisbane (no DST)', tz:'Australia/Brisbane'},
-      {label:'South Australia — Adelaide', tz:'Australia/Adelaide'},
-      {label:'Northern Territory — Darwin (no DST)', tz:'Australia/Darwin'},
-      {label:'Western Australia — Perth (no DST)', tz:'Australia/Perth'}
-    ]]
-  ]);
-
-  // City keywords → tz (helps free-text like "London")
   const CITY_HINTS = new Map([
-    ['london','Europe/London'], ['bucharest','Europe/Bucharest'], ['rome','Europe/Rome'], ['paris','Europe/Paris'], ['berlin','Europe/Berlin'],
+    ['london','Europe/London'], ['rome','Europe/Rome'], ['bucharest','Europe/Bucharest'], ['paris','Europe/Paris'], ['berlin','Europe/Berlin'],
     ['new york','America/New_York'], ['chicago','America/Chicago'], ['denver','America/Denver'], ['los angeles','America/Los_Angeles'],
-    ['phoenix','America/Phoenix'], ['toronto','America/Toronto'], ['vancouver','America/Vancouver'],
-    ['halifax','America/Halifax'], ['st john', 'America/St_Johns'], ['st. john', 'America/St_Johns']
+    ['phoenix','America/Phoenix'], ['toronto','America/Toronto'], ['vancouver','America/Vancouver']
   ]);
 
-  // ============== Elements & state ==============
+  // Build options list: countries + zones + city aliases
+  const SEARCH_ROWS = [];
+  COUNTRY_TZ.forEach((tz,c)=>SEARCH_ROWS.push({label:`${c} — ${labelTZ(tz)}`, tz, key:c.toLowerCase()}));
+  ALL_TZ.forEach(tz=>SEARCH_ROWS.push({label:labelTZ(tz), tz, key:tz.toLowerCase()}));
+  CITY_HINTS.forEach((tz,city)=>SEARCH_ROWS.push({label:`${city[0].toUpperCase()+city.slice(1)} — ${labelTZ(tz)}`, tz, key:city}));
+
+  // ===== Elements =====
   const repSelect = document.getElementById('repSelect');
   const repRange  = document.getElementById('repRange');
   const repTime   = document.getElementById('repTime');
@@ -225,143 +228,101 @@
   const badge  = document.getElementById('badge');
   const diffEl = document.getElementById('diff');
 
+  // ===== State (start at 12:00 PM; sliders mirror) =====
   let state = {
     repTz: repSelect.value,
-    repMins: (()=>{ const p=parts(new Date(), repSelect.value); return p.hour*60+p.minute; })(),
+    repMins: 720,              // start centered at 12 PM
     pTz: null,
     pMins: null,
     p24: false
   };
 
-  // ============== Render ==============
+  const REP_TICKS = [360,720,1080]; // 6 AM, 12 PM, 6 PM
+  function setPTicks(a){
+    const el=document.getElementById('pTicks');
+    el.children[0].textContent=a[0]; el.children[1].textContent=a[1]; el.children[2].textContent=a[2];
+  }
+  function updateProspectTickLabels(){
+    if (!state.pTz){ setPTicks(['–','–','–']); return; }
+    const labels = REP_TICKS.map(mins=>{
+      const m = convert(mins, state.repTz, state.pTz).minutes;
+      return state.p24 ? fmt24(m) : fmt12(m);
+    });
+    setPTicks(labels);
+  }
+
+  // ===== Render =====
   function render(){
+    // Rep time + slider
     repTime.textContent = fmt12(state.repMins);
     repRange.value = state.repMins;
 
+    // Mirror the thumb position for Prospect (visual only)
+    pRange.value = state.repMins;
+
     const active = !!state.pTz;
     milBtn.disabled = !active;
-    pRange.disabled = !active;
 
     if (active){
       const conv = convert(state.repMins, state.repTz, state.pTz);
       state.pMins = conv.minutes;
       pTime.textContent = state.p24 ? fmt24(state.pMins) : fmt12(state.pMins);
-      pRange.value = state.pMins;
 
       if (conv.dayOff !== 0){ badge.style.display='inline-block'; badge.textContent=(conv.dayOff>0?'+':'')+conv.dayOff+' day'; }
       else badge.style.display='none';
 
-      let d = (state.pMins - state.repMins)/60;
-      d = Math.round(d*100)/100; if (d>12) d-=24; if (d<-12) d+=24;
+      let d = (state.pMins - state.repMins)/60; d = Math.round(d*100)/100; if (d>12) d-=24; if (d<-12) d+=24;
       diffEl.textContent = (d>0?'+':'') + d + ' hrs';
+
+      updateProspectTickLabels();
     } else {
       pTime.textContent = '--:--';
       badge.style.display='none';
       diffEl.textContent = '—';
+      setPTicks(['–','–','–']);
     }
   }
 
-  // ============== Prospect dropdown filtering ==============
-  function rowsForQuery(q){
-    const s = (q||'').trim().toLowerCase();
-    if (!s) return [];
-
-    // City direct hints first
-    if (CITY_HINTS.has(s)) return [{label: 'City — '+labelTZ(CITY_HINTS.get(s)), tz: CITY_HINTS.get(s)}];
-
-    // Exact multi-zone country → expand zones
-    for (const [name, zones] of MULTI_ZONE){
-      if (name.toLowerCase() === s) return zones.map(z => ({label: name+' — '+z.label+' ('+z.tz+')', tz:z.tz}));
-    }
-
-    // Exact single zone country
-    for (const [name, tz] of SINGLE_ZONE){
-      if (name.toLowerCase() === s) return [{label: name+' — '+labelTZ(tz), tz}];
-    }
-
-    // Fuzzy: show country zones if country name contains s
-    const expanded = [];
-    for (const [name, zones] of MULTI_ZONE){
-      if (name.toLowerCase().includes(s)){
-        zones.forEach(z => expanded.push({label: name+' — '+z.label+' ('+z.tz+')', tz:z.tz}));
-      }
-    }
-    for (const [name, tz] of SINGLE_ZONE){
-      if (name.toLowerCase().includes(s)){
-        expanded.push({label: name+' — '+labelTZ(tz), tz});
-      }
-    }
-
-    // Add IANA zones that match
-    const tzMatches = ALL_TZ.filter(z =>
-      z.toLowerCase().includes(s) || labelTZ(z).toLowerCase().includes(s)
-    ).map(z => ({label: labelTZ(z), tz:z}));
-
-    // Merge; keep first 400
-    return expanded.concat(tzMatches).slice(0,400);
+  // ===== Prospect dropdown =====
+  function rowsFor(q){
+    const s=(q||'').trim().toLowerCase();
+    if(!s) return [];
+    return SEARCH_ROWS.filter(r => r.key.includes(s) || r.label.toLowerCase().includes(s)).slice(0,400);
   }
-
-  function openDropdown(options){
-    if (!options.length){
-      pDrop.innerHTML = '<div class="hint">No matches. Try a city or pick a country to see its zones.</div>';
-      pDrop.style.display = 'block';
-      return;
-    }
-    pDrop.innerHTML = options.map(o => `<div class="row" data-tz="${o.tz}">${o.label}</div>`).join('');
-    pDrop.style.display = 'block';
+  function openDrop(q){
+    const rows = rowsFor(q);
+    if (!rows.length){ pDrop.innerHTML='<div class="hint">No matches. Try a country or city.</div>'; pDrop.style.display='block'; return; }
+    pDrop.innerHTML = rows.map(r=>`<div class="row" data-tz="${r.tz}">${r.label}</div>`).join('');
+    pDrop.style.display='block';
   }
-  function closeDropdown(){ pDrop.style.display = 'none'; }
-
-  pInput.addEventListener('input', () => {
-    const opts = rowsForQuery(pInput.value);
-    openDropdown(opts);
+  function closeDrop(){ pDrop.style.display='none'; }
+  pInput.addEventListener('input', ()=>openDrop(pInput.value));
+  pInput.addEventListener('focus', ()=>openDrop(pInput.value));
+  pInput.addEventListener('keydown', e=>{
+    if (e.key==='Enter'){
+      const first = pDrop.querySelector('.row'); if(first){ first.click(); e.preventDefault(); }
+    } else if (e.key==='Escape'){ closeDrop(); }
   });
-  pInput.addEventListener('focus', () => {
-    const opts = rowsForQuery(pInput.value);
-    openDropdown(opts);
-  });
-  document.addEventListener('click', (e) => {
-    if (!pDrop.contains(e.target) && e.target !== pInput) closeDropdown();
-  });
-  pDrop.addEventListener('click', (e) => {
-    const row = e.target.closest('.row'); if (!row) return;
+  document.addEventListener('click', e=>{ if(!pDrop.contains(e.target) && e.target!==pInput) closeDrop(); });
+  pDrop.addEventListener('click', e=>{
+    const row=e.target.closest('.row'); if(!row) return;
     state.pTz = row.getAttribute('data-tz');
-    pInput.value = row.textContent; // show selection
-    closeDropdown();
+    pInput.value = row.textContent; closeDrop();
     render();
-  });
-  pInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter'){
-      const opts = rowsForQuery(pInput.value);
-      if (opts.length){
-        state.pTz = opts[0].tz;
-        pInput.value = opts[0].label;
-        closeDropdown();
-        render();
-      }
-      e.preventDefault();
-    } else if (e.key === 'Escape'){
-      closeDropdown();
-    }
   });
 
-  // ============== Events ==============
-  repSelect.addEventListener('change', (e) => {
-    state.repTz = e.target.value;
-    const p = parts(new Date(), state.repTz);
-    state.repMins = p.hour*60+p.minute;
-    render();
-  });
-  repRange.addEventListener('input', (e) => { state.repMins = +e.target.value; render(); });
-  milBtn.addEventListener('click', () => {
-    if (!state.pTz) return;
+  // ===== Events =====
+  repSelect.addEventListener('change', e=>{ state.repTz = e.target.value; updateProspectTickLabels(); render(); });
+  repRange .addEventListener('input', e=>{ state.repMins = +e.target.value; render(); });
+  milBtn.addEventListener('click', ()=>{
+    if(!state.pTz) return;
     state.p24 = !state.p24;
     milBtn.classList.toggle('active', state.p24);
     milBtn.setAttribute('aria-pressed', String(state.p24));
-    render();
+    updateProspectTickLabels(); render();
   });
 
-  // ============== Init ==============
+  // ===== Init =====
   render();
 })();
 </script>
