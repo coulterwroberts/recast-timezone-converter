@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Timezone Overlap Tool</title>
+<title>Time Zone Converter</title>
 <style>
     body {
         font-family: Arial, sans-serif;
@@ -29,7 +29,6 @@
         font-weight: bold;
         font-size: 1.2em;
         margin-bottom: 8px;
-        color: green;
     }
     select, input {
         width: 100%;
@@ -56,11 +55,11 @@
         margin-top: 15px;
         font-size: 1em;
     }
-    .overlap {
+    .highlight-green {
         color: green;
         font-weight: bold;
     }
-    .arrow {
+    .arrow-green {
         font-weight: bold;
         color: green;
     }
@@ -105,7 +104,7 @@
 
 <!-- Info section -->
 <div class="info-section" id="time-difference"></div>
-<div class="info-section overlap" id="overlap-hours"></div>
+<div class="info-section" id="overlap-hours"></div>
 
 <script>
     const repSelect = document.getElementById("rep-timezone");
@@ -185,14 +184,14 @@
         const diffHours = diff >= 0 ? diff : diff + 24;
         const relation = diffHours > 12 ? 24 - diffHours : diffHours;
         const aheadBehind = diffHours <= 12 ? "ahead" : "behind";
-        timeDifference.innerHTML = `<b>${prospectCountrySelect.value || "Selected Timezone"}</b> is ${relation} hours ${aheadBehind} <b>${repSelect.options[repSelect.selectedIndex].text}</b>`;
+        timeDifference.innerHTML = `<b>${prospectCountrySelect.value || "Selected Timezone"}</b> is <span class="highlight-green">${relation} hours ${aheadBehind}</span> <b>${repSelect.options[repSelect.selectedIndex].text}</b>`;
 
         // Overlapping business hours
         const repStart = 9, repEnd = 17;
         let prospectStart = (repStart + relation) % 24;
         let prospectEnd = (repEnd + relation) % 24;
 
-        overlapHours.innerHTML = `Overlapping business hours: ${formatHour(repStart)}–${formatHour(repEnd)} <span class="arrow">↔</span> ${formatHour(prospectStart)}–${formatHour(prospectEnd)}`;
+        overlapHours.innerHTML = `Overlapping business hours: ${formatHour(repStart)}–${formatHour(repEnd)} <span class="arrow-green">↔</span> ${formatHour(prospectStart)}–${formatHour(prospectEnd)}`;
     }
 
     function formatTime(date, military) {
@@ -223,3 +222,4 @@
 </script>
 </body>
 </html>
+
