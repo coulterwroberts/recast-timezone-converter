@@ -52,7 +52,7 @@
 
   .summary{margin-top:20px;border:3px solid var(--blue);border-radius:14px;padding:16px;background:#fff;text-align:center}
   .muted{color:var(--muted);font-size:15px;line-height:1.35}
-  .big{font-size:24px;font-weight:800;margin:2px 0 6px;color:var(--green)} /* green difference sentence */
+  .big{font-size:24px;font-weight:800;margin:2px 0 6px;color:var(--green)} /* always green */
   .ov-title{font-weight:800;margin-top:12px}
   .ov-text{margin-top:6px;font-weight:600}
   .ov-chip{display:inline-block;margin-top:8px;padding:6px 10px;border-radius:10px;background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;font-weight:600}
@@ -250,22 +250,34 @@
     if (s.startsWith(q)) score+=3; return (i===q.length)?score:-1;
   }
   function renderCountryList(q){
-    const items = q?COUNTRIES.map(c=>({c,score:fuzzyScore(q,c)})).filter(x=>x.score>=0).sort((a,b)=>b.score-a.score).map(x=>x.c) : COUNTRIES;
-    countryList.innerHTML = items.map((c,i)=>`<div class="option" role="option" data-value="${c}" ${i===0?'aria-selected="true"':''}>${c}</div>`).join('');
+    const items = q
+      ? COUNTRIES.map(c=>({c,score:fuzzyScore(q,c)})).filter(x=>x.score>=0).sort((a,b)=>b.score-a.score).map(x=>x.c)
+      : COUNTRIES;
+    countryList.innerHTML = items.map((c,i)=>
+      `<div class="option" role="option" data-value="${c}" ${i===0?'aria-selected="true"':''}>${c}</div>`
+    ).join('');
     countryList.style.display = items.length ? 'block':'none';
   }
   let activeIdx=0;
-  function moveActive(d){ const opts=[...countryList.querySelectorAll('.option')]; if(!opts.length)return;
-    opts[activeIdx]?.removeAttribute('aria-selected'); activeIdx=(activeIdx+d+opts.length)%opts.length;
-    opts[activeIdx].setAttribute('aria-selected','true'); opts[activeIdx].scrollIntoView({block:'nearest'}); }
+  function moveActive(d){
+    const opts=[...countryList.querySelectorAll('.option')]; if(!opts.length)return;
+    opts[activeIdx]?.removeAttribute('aria-selected');
+    activeIdx=(activeIdx+d+opts.length)%opts.length;
+    opts[activeIdx].setAttribute('aria-selected','true');
+    opts[activeIdx].scrollIntoView({block:'nearest'});
+  }
   function chooseActive(){ const o=countryList.querySelector('.option[aria-selected="true"]'); if(o) chooseCountry(o.dataset.value); }
   countryInput.addEventListener('focus',()=>renderCountryList(countryInput.value.trim()));
   countryInput.addEventListener('input',e=>{activeIdx=0;renderCountryList(e.target.value.trim());});
   countryInput.addEventListener('keydown',e=>{
-    if(e.key==='ArrowDown'){e.preventDefault();moveActive(1);} else if(e.key==='ArrowUp'){e.preventDefault();moveActive(-1);}
-    else if(e.key==='Enter'){e.preventDefault();chooseActive();} else if(e.key==='Escape'){countryList.style.display='none';}
+    if(e.key==='ArrowDown'){e.preventDefault();moveActive(1);}
+    else if(e.key==='ArrowUp'){e.preventDefault();moveActive(-1);}
+    else if(e.key==='Enter'){e.preventDefault();chooseActive();}
+    else if(e.key==='Escape'){countryList.style.display='none';}
   });
-  countryList.addEventListener('click',e=>{const el=e.target.closest('.option'); if(el) chooseCountry(el.dataset.value);});
+  countryList.addEventListener('click',e=>{
+    const el=e.target.closest('.option'); if(el) chooseCountry(el.dataset.value);
+  });
 
   function chooseCountry(name){
     countryInput.value = name;
@@ -296,9 +308,104 @@
     updatePTicks(); updateOverlap(); render();
   }
 
-  // Ticks (mirror the Rep’s 6–12–6 positions)
+  // Ticks
   const REP_TICKS=[360,720,1080];
-  function setPTicks(labels){ const el=document.getElementById('pTicks'); el.children[0].textContent=labels[0]; el.children[1].textContent=labels[1]; el.children[2].textContent=labels[2]; }
+  function setPTicks(labels){
+    const el=document.getElementById('pTicks');
+    el.children[0].textContent=labels[0];
+    el.children[1].textContent=labels[1];
+    el.children[2].textContent=labels[2];
+  }
   function updatePTicks(){
     if(!state.pTz){ setPTicks(['–','–','–']); requestAnimationFrame(guardTickEdges); return; }
-    const labels = REP_TICKS.map(m => fmt12
+    const labels = REP_TICKS.map(m => fmt12(convert(m,state.repTz,state.pTz).minutes));
+    setPTicks(labels); requestAnimationFrame(guardTickEdges);
+  }
+
+  // Overlap (9–5 local on both sides)
+  function computeOverlap(){
+    if(!state.pTz) return [];
+    const rs=9*60,re=17*60, ps=9*60, pe=17*60;
+    const segs=[]; let cur=null;
+    for(let m=rs; m<=re; m+=15){
+      const pm=convert(m,state.repTz,state.pTz).minutes;
+      const ok = (pm>=ps && pm<=pe);
+      if(ok){ if(!cur) cur={s:m,e:m+15}; else cur.e=m+15; }
+      else if(cur){ segs.push(cur); cur=null; }
+    }
+    if(cur) segs.push(cur);
+    return segs;
+  }
+  function updateOverlap(){
+    ovChip.innerHTML='';
+    if(!state.pTz){ ovMsg.textContent='Select a country to see 9–5 overlap.'; return; }
+    const segs=computeOverlap();
+    if(!segs.length){ ovMsg.textContent='No overlap between 9–5 windows.'; return; }
+    ovMsg.textContent='Rep 9–5 vs Prospect 9–5:';
+    const f=fmt12;
+    ovChip.innerHTML = segs.map(s=>{
+      const pS=convert(s.s,state.repTz,state.pTz).minutes;
+      const pE=convert(s.e,state.repTz,state.pTz).minutes;
+      return `<span class="ov-chip">Rep ${f(s.s)}–${f(s.e)} ↔ ${state.pCountry?state.pCountry:'Prospect'} ${f(pS)}–${f(pE)}</span>`;
+    }).join(' ');
+  }
+
+  // Render / mirror sliders + dynamic difference sentence
+  function render(){
+    rRange.value = state.repMins; pRange.value = state.repMins;
+    rTime.textContent = fmt12(state.repMins);
+
+    const repName = rSelect.options[rSelect.selectedIndex].textContent; // Pacific/Mountain/Central/Eastern
+    // strip parenthesis "(RegionId)" from pLabel for display, keep "Country — Region"
+    const prospectNameRaw = state.pLabel || 'Prospect';
+    const prospectName = prospectNameRaw.replace(/\s*\([^)]*\)/g, '');
+
+    if(state.pTz){
+      const conv=convert(state.repMins,state.repTz,state.pTz); state.pMins=conv.minutes;
+      pTime.textContent = fmt12(state.pMins);
+      badge.style.display = conv.dayOff!==0 ? 'inline-block':'none';
+      if(conv.dayOff!==0) badge.textContent=(conv.dayOff>0?'+':'')+conv.dayOff+' day';
+
+      // signed hours diff normalized to [-12,12]
+      let d=(state.pMins-state.repMins)/60; d=Math.round(d*100)/100; if(d>12)d-=24; if(d<-12)d+=24;
+      const aheadBehind = d===0 ? 'the same as' : (d>0 ? 'ahead of' : 'behind');
+      const absH = Math.abs(d);
+
+      // Always green via .big class; wording per request
+      diffEl.textContent = `${prospectName} is ${absH} ${absH===1?'hour':'hours'} ${aheadBehind} ${repName}.`;
+
+      updatePTicks();
+    }else{
+      pTime.textContent='--:--'; badge.style.display='none';
+      diffEl.textContent='—';
+      setPTicks(['–','–','–']); requestAnimationFrame(guardTickEdges);
+    }
+  }
+
+  rSelect.addEventListener('change',e=>{state.repTz=e.target.value; updatePTicks(); updateOverlap(); render();});
+  rRange.addEventListener('input',e=>{state.repMins=+e.target.value; render();});
+  pRange.addEventListener('input',e=>{state.repMins=+e.target.value; render();});
+
+  // Keep tick labels away from edges
+  function guardTickEdges(){
+    const SAFE=16;
+    document.querySelectorAll('.tick-wrap').forEach(wrap=>{
+      const spans=wrap.querySelectorAll('.ticks span'); spans.forEach(s=>s.style.transform='');
+      const wr=wrap.getBoundingClientRect();
+      spans.forEach(span=>{
+        const r=span.getBoundingClientRect(); let dx=0;
+        if(r.left<wr.left+SAFE) dx=(wr.left+SAFE)-r.left;
+        if(r.right>wr.right-SAFE) dx=-(r.right-(wr.right-SAFE));
+        if(dx) span.style.transform=`translateX(${dx}px)`;
+      });
+    });
+  }
+  window.addEventListener('resize',()=>requestAnimationFrame(guardTickEdges));
+
+  // Defaults: no country pre-selected; sliders start at 12:00 PM
+  rRange.value = pRange.value = state.repMins;
+  updatePTicks(); updateOverlap(); render();
+})();
+</script>
+</body>
+</html>
