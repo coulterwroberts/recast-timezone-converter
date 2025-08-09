@@ -8,7 +8,7 @@
   :root{
     --bg:#f8fafc; 
     --card:#fff; 
-    --border:#2563eb;       /* blue borders everywhere per your request */
+    --border:#2563eb;       /* blue borders everywhere */
     --text:#0f172a; 
     --muted:#64748b;
     --orange:#f97316; 
@@ -68,11 +68,7 @@
   .badge{font-size:12px;border:2px solid #cbd5e1;border-radius:999px;padding:2px 8px;color:#334155;display:none}
 
   .btn{
-    border:none;
-    border-radius:10px;
-    padding:8px 12px;
-    font-weight:700;
-    cursor:pointer;
+    border:none;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer;
   }
   .btn-blue{background:#0b66ff;color:#fff}
   .btn-blue[aria-pressed="true"]{opacity:.9;box-shadow:inset 0 0 0 2px rgba(255,255,255,.5)}
@@ -233,7 +229,7 @@
       ["Pacific (America/Tijuana)","America/Tijuana"]
     ],
 
-    /* Single-zone countries (string for simplicity) */
+    /* Single-zone countries */
     "United Kingdom":"Europe/London","Ireland":"Europe/Dublin",
     "Italy":"Europe/Rome","Romania":"Europe/Bucharest","Germany":"Europe/Berlin","France":"Europe/Paris","Spain":"Europe/Madrid",
     "Netherlands":"Europe/Amsterdam","Sweden":"Europe/Stockholm","Norway":"Europe/Oslo","Denmark":"Europe/Copenhagen",
@@ -310,7 +306,7 @@
     repMins: 12*60,
     pCountry: null,
     pTz: null,
-    pLabel: null,     // e.g., "Canada — Eastern"
+    pLabel: null,
     p24: false        // Prospect military-time toggle
   };
 
@@ -374,25 +370,27 @@
     updateOverlap(); render();
   }
 
-  // Overlap (simplified: single suggested window, 9–5 local on both sides)
-  function computeSuggestedWindow(){
+  // Overlap (strict: cap at 5:00 PM local for both)
+  function computeSuggestedWindowStrict(){
     if(!state.pTz) return null;
-    const rs = 9*60, re = 17*60;             // rep window
-    const ps = 9*60, pe = 17*60;             // prospect window (in prospect local)
+    const rs = 9*60, re = 17*60; // rep 9–5
+    const ps = 9*60, pe = 17*60; // prospect 9–5
 
-    // find all rep minutes within rep window that map inside prospect window
     let start=null, end=null;
-    for(let m=rs; m<=re; m+=15){
-      const pm = convert(m, state.repTz, state.pTz).minutes;
-      const ok = (pm>=ps && pm<=pe);
-      if(ok){
+    // iterate 15-min blocks that *fully* fit in both windows
+    for(let m=rs; m<=re-15; m+=15){
+      const pStart = convert(m,   state.repTz, state.pTz).minutes;
+      const pEnd   = convert(m+15,state.repTz, state.pTz).minutes;
+      const blockOK = (m   >= rs && m+15 <= re) && (pStart >= ps && pEnd <= pe);
+      if(blockOK){
         if(start===null) start=m;
-        end=m;
+        end=m+15; // always end at block end, but never past 5:00
+      }else if(start!==null){
+        break;
       }
     }
     if(start===null) return null;
-    // expand end to the end of the last 15-min block
-    return {start, end: end+15};
+    return {start, end}; // end already ≤ 17:00 on both sides
   }
 
   function updateOverlap(){
@@ -401,7 +399,7 @@
       ovMsg.textContent='Select a country to see 9–5 overlap.'; 
       return; 
     }
-    const win = computeSuggestedWindow();
+    const win = computeSuggestedWindowStrict();
     if(!win){
       ovMsg.textContent='No overlap between 9–5 windows.';
       return;
@@ -420,34 +418,36 @@
     return state.p24 ? fmt24(mm) : fmt12(mm);
   }
 
-  // Render / mirror sliders + dynamic difference sentence
+  // Render / two-way binding between sliders
   function render(){
+    // Rep always shows its own minutes
     rRange.value = state.repMins; 
-    pRange.value = state.repMins;         // mirror exactly
     rTime.textContent = fmt12(state.repMins);
 
     const repName = rSelect.options[rSelect.selectedIndex].textContent;
     const prospectName = state.pLabel || 'Prospect';
 
     if(state.pTz){
-      const conv=convert(state.repMins,state.repTz,state.pTz); 
-      state.pMins=conv.minutes;
+      // Prospect slider thumb shows *prospect local* time for the same moment
+      const conv=convert(state.repMins,state.repTz,state.pTz);
+      state.pMins = conv.minutes;
+      pRange.value = state.pMins;                 // <— key change: reflect local prospect time
       pTime.textContent = formatProspect(state.repMins);
       badge.style.display = conv.dayOff!==0 ? 'inline-block':'none';
       if(conv.dayOff!==0) badge.textContent=(conv.dayOff>0?'+':'')+conv.dayOff+' day';
 
-      // signed hours diff normalized to [-12,12]
+      // hours difference (normalized)
       let d=(state.pMins-state.repMins)/60; 
       d=Math.round(d*100)/100; 
       if(d>12)d-=24; 
       if(d<-12)d+=24;
       const aheadBehind = d===0 ? 'the same as' : (d>0 ? 'ahead of' : 'behind');
       const absH = Math.abs(d);
-      // sentence always green by CSS
       diffEl.textContent = `${prospectName} is ${absH} ${absH===1?'hour':'hours'} ${aheadBehind} ${repName}.`;
     }else{
       pTime.textContent='--:--'; 
       badge.style.display='none';
+      pRange.value = state.repMins; // no country yet—just mirror position
       diffEl.textContent='—';
     }
     requestAnimationFrame(guardTickEdges);
@@ -472,7 +472,19 @@
   // Events
   rSelect.addEventListener('change',e=>{state.repTz=e.target.value; updateOverlap(); render();});
   rRange.addEventListener('input',e=>{state.repMins=+e.target.value; render(); updateOverlap();});
-  pRange.addEventListener('input',e=>{state.repMins=+e.target.value; render(); updateOverlap();});
+
+  // Prospect slider as input: convert *back* to rep time so both stay linked
+  pRange.addEventListener('input',e=>{
+    const pVal = +e.target.value;
+    if(state.pTz){
+      const back = convert(pVal, state.pTz, state.repTz).minutes; // prospect local -> rep local
+      state.repMins = back;
+    }else{
+      state.repMins = pVal; // no country picked yet, just mirror
+    }
+    render(); updateOverlap();
+  });
+
   milBtn.addEventListener('click',()=>{
     state.p24 = !state.p24;
     milBtn.setAttribute('aria-pressed', String(state.p24));
@@ -486,4 +498,3 @@
 </script>
 </body>
 </html>
-
