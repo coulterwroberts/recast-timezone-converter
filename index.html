@@ -1,231 +1,225 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Time Zone Converter</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timezone Overlap Tool</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #fff;
-    margin: 0;
-    padding: 20px;
-  }
-  .container {
-    border: 4px solid orange;
-    padding: 20px;
-    max-width: 1000px;
-    margin: auto;
-  }
-  h2 {
-    margin: 0 0 10px;
-  }
-  .green {
-    color: green;
-    font-weight: bold;
-  }
-  .row {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-  }
-  .panel {
-    flex: 1;
-    border: 2px solid #007BFF;
-    padding: 10px;
-    box-sizing: border-box;
-  }
-  label {
-    font-weight: bold;
-    display: block;
-    margin-bottom: 5px;
-  }
-  select, input[type="text"] {
-    width: 100%;
-    padding: 6px;
-    margin-bottom: 10px;
-    font-size: 14px;
-  }
-  .slider-container {
-    position: relative;
-    height: 60px;
-  }
-  input[type="range"] {
-    width: 100%;
-    margin: 20px 0;
-  }
-  .ticks {
-    display: flex;
-    justify-content: space-between;
-    margin-top: -15px;
-    font-size: 12px;
-    font-weight: bold;
-    position: relative;
-  }
-  .ticks span {
-    width: 0;
-    position: relative;
-  }
-  .ticks span:first-child {
-    transform: translateX(-8px);
-  }
-  .ticks span:nth-child(2) {
-    transform: translateX(0px);
-  }
-  .ticks span:last-child {
-    transform: translateX(8px);
-  }
-  .info {
-    margin-top: 10px;
-    font-size: 14px;
-  }
-  .bold {
-    font-weight: bold;
-  }
+    body {
+        font-family: Arial, sans-serif;
+        background: #fff;
+        margin: 20px;
+        display: flex;
+        justify-content: center;
+    }
+    .container {
+        display: flex;
+        gap: 20px;
+        border: 3px solid orange;
+        border-radius: 10px;
+        padding: 20px;
+    }
+    .timezone-box {
+        border: 2px solid #1E90FF;
+        border-radius: 8px;
+        padding: 15px;
+        flex: 1;
+    }
+    .timezone-title {
+        font-weight: bold;
+        font-size: 1.2em;
+        margin-bottom: 8px;
+        color: green;
+    }
+    select, input {
+        width: 100%;
+        padding: 8px;
+        font-size: 1em;
+        margin-bottom: 12px;
+    }
+    .slider {
+        width: 100%;
+        margin: 10px 0;
+    }
+    .time-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9em;
+        color: #555;
+        margin-top: -5px;
+    }
+    .time-display {
+        font-size: 1.5em;
+        font-weight: bold;
+    }
+    .info-section {
+        margin-top: 15px;
+        font-size: 1em;
+    }
+    .overlap {
+        color: green;
+        font-weight: bold;
+    }
+    .arrow {
+        font-weight: bold;
+        color: green;
+    }
+    button {
+        padding: 6px 12px;
+        font-size: 0.9em;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        cursor: pointer;
+    }
 </style>
 </head>
 <body>
 
 <div class="container">
-  <div class="row">
-    <div class="panel">
-      <label class="green">Rep’s Timezone</label>
-      <select id="rep-timezone">
-        <option value="America/Los_Angeles">Pacific</option>
-        <option value="America/Denver">Mountain</option>
-        <option value="America/Chicago" selected>Central</option>
-        <option value="America/New_York">Eastern</option>
-      </select>
-      <div class="slider-container">
-        <input type="range" id="rep-slider" min="0" max="1440" step="15" value="720" />
-        <div class="ticks">
-          <span>6 AM</span>
-          <span>12 PM</span>
-          <span>6 PM</span>
+    <!-- Rep's Timezone -->
+    <div class="timezone-box">
+        <div class="timezone-title">Rep’s Timezone</div>
+        <select id="rep-timezone"></select>
+        <div class="time-display" id="rep-time">7:00 AM</div>
+        <input type="range" min="0" max="1439" value="420" class="slider" id="rep-slider">
+        <div class="time-labels">
+            <span>6 AM</span><span>12 PM</span><span>6 PM</span>
         </div>
-      </div>
-      <div id="rep-time-display" class="bold"></div>
     </div>
 
-    <div class="panel">
-      <label class="green">Prospect’s Timezone</label>
-      <input type="text" id="prospect-country" placeholder="Input Country" list="country-list" />
-      <datalist id="country-list"></datalist>
-      <select id="prospect-timezone" style="display:none"></select>
-      <div class="slider-container">
-        <input type="range" id="prospect-slider" min="0" max="1440" step="15" value="720" />
-        <div class="ticks">
-          <span>6 AM</span>
-          <span>12 PM</span>
-          <span>6 PM</span>
+    <!-- Prospect's Timezone -->
+    <div class="timezone-box">
+        <div class="timezone-title">Prospect’s Timezone</div>
+        <select id="prospect-country">
+            <option value="">Input Country</option>
+        </select>
+        <select id="prospect-timezone" style="display:none;"></select>
+        <div class="time-display" id="prospect-time">8:00 AM</div>
+        <input type="range" min="0" max="1439" value="480" class="slider" id="prospect-slider">
+        <div class="time-labels">
+            <span>6 AM</span><span>12 PM</span><span>6 PM</span>
         </div>
-      </div>
-      <div id="prospect-time-display" class="bold"></div>
-      <button id="toggle-military">Toggle Military Time</button>
+        <button id="toggle-military">Toggle Military Time</button>
     </div>
-  </div>
-
-  <div class="info">
-    <div id="current-difference" class="bold"></div>
-    <div id="overlap" class="bold"></div>
-  </div>
 </div>
 
+<!-- Info section -->
+<div class="info-section" id="time-difference"></div>
+<div class="info-section overlap" id="overlap-hours"></div>
+
 <script>
-  const repTZ = document.getElementById("rep-timezone");
-  const repSlider = document.getElementById("rep-slider");
-  const repTimeDisplay = document.getElementById("rep-time-display");
+    const repSelect = document.getElementById("rep-timezone");
+    const prospectCountrySelect = document.getElementById("prospect-country");
+    const prospectTimezoneSelect = document.getElementById("prospect-timezone");
+    const repSlider = document.getElementById("rep-slider");
+    const prospectSlider = document.getElementById("prospect-slider");
+    const repTimeDisplay = document.getElementById("rep-time");
+    const prospectTimeDisplay = document.getElementById("prospect-time");
+    const timeDifference = document.getElementById("time-difference");
+    const overlapHours = document.getElementById("overlap-hours");
+    const toggleMilitaryBtn = document.getElementById("toggle-military");
 
-  const prospectCountry = document.getElementById("prospect-country");
-  const prospectTZ = document.getElementById("prospect-timezone");
-  const prospectSlider = document.getElementById("prospect-slider");
-  const prospectTimeDisplay = document.getElementById("prospect-time-display");
+    let militaryTime = false;
 
-  const currentDiff = document.getElementById("current-difference");
-  const overlap = document.getElementById("overlap");
-  const toggleMilitary = document.getElementById("toggle-military");
+    const timezones = {
+        "Central": "America/Chicago",
+        "Eastern": "America/New_York",
+        "Pacific": "America/Los_Angeles",
+        "Mountain": "America/Denver"
+    };
 
-  let military = false;
-  const countries = {
-    "United States": ["America/New_York","America/Chicago","America/Denver","America/Los_Angeles"],
-    "Canada": ["America/Toronto","America/Vancouver","America/Edmonton","America/Halifax"],
-    "Germany": ["Europe/Berlin"],
-    "Romania": ["Europe/Bucharest"],
-    "China": ["Asia/Shanghai"],
-    "United Kingdom": ["Europe/London"],
-    "Italy": ["Europe/Rome"],
-    "Australia": ["Australia/Sydney","Australia/Perth"]
-  };
+    const countries = {
+        "Germany": ["Europe/Berlin"],
+        "United Kingdom": ["Europe/London"],
+        "Canada": ["America/Toronto", "America/Winnipeg", "America/Vancouver"],
+        "China": ["Asia/Shanghai"]
+    };
 
-  const datalist = document.getElementById("country-list");
-  for (let c in countries) {
-    let opt = document.createElement("option");
-    opt.value = c;
-    datalist.appendChild(opt);
-  }
-
-  prospectCountry.addEventListener("change", () => {
-    const val = prospectCountry.value;
-    prospectTZ.innerHTML = "";
-    if (countries[val]) {
-      countries[val].forEach(tz => {
-        let opt = document.createElement("option");
-        opt.value = tz;
+    // Populate rep timezone dropdown
+    Object.keys(timezones).forEach(tz => {
+        const opt = document.createElement("option");
+        opt.value = timezones[tz];
         opt.textContent = tz;
-        prospectTZ.appendChild(opt);
-      });
-      prospectTZ.style.display = "block";
-    } else {
-      prospectTZ.style.display = "none";
+        repSelect.appendChild(opt);
+    });
+
+    // Populate countries
+    Object.keys(countries).forEach(country => {
+        const opt = document.createElement("option");
+        opt.value = country;
+        opt.textContent = country;
+        prospectCountrySelect.appendChild(opt);
+    });
+
+    prospectCountrySelect.addEventListener("change", () => {
+        const selectedCountry = prospectCountrySelect.value;
+        prospectTimezoneSelect.innerHTML = "";
+        if (countries[selectedCountry].length > 1) {
+            countries[selectedCountry].forEach(tz => {
+                const opt = document.createElement("option");
+                opt.value = tz;
+                opt.textContent = tz;
+                prospectTimezoneSelect.appendChild(opt);
+            });
+            prospectTimezoneSelect.style.display = "block";
+        } else {
+            prospectTimezoneSelect.style.display = "none";
+        }
+        updateTimes();
+    });
+
+    function updateTimes() {
+        const repTZ = repSelect.value;
+        const prospectTZ = prospectTimezoneSelect.value || (prospectCountrySelect.value && countries[prospectCountrySelect.value][0]);
+        if (!repTZ || !prospectTZ) return;
+
+        const now = new Date();
+        const repTime = new Date(now.toLocaleString("en-US", { timeZone: repTZ }));
+        repTime.setHours(0, repSlider.value);
+        const prospectTime = new Date(repTime.toLocaleString("en-US", { timeZone: prospectTZ }));
+
+        repTimeDisplay.textContent = formatTime(repTime, false);
+        prospectTimeDisplay.textContent = formatTime(prospectTime, militaryTime);
+
+        const diff = (prospectTime.getTime() - repTime.getTime()) / 3600000;
+        const diffHours = diff >= 0 ? diff : diff + 24;
+        const relation = diffHours > 12 ? 24 - diffHours : diffHours;
+        const aheadBehind = diffHours <= 12 ? "ahead" : "behind";
+        timeDifference.innerHTML = `<b>${prospectCountrySelect.value || "Selected Timezone"}</b> is ${relation} hours ${aheadBehind} <b>${repSelect.options[repSelect.selectedIndex].text}</b>`;
+
+        // Overlapping business hours
+        const repStart = 9, repEnd = 17;
+        let prospectStart = (repStart + relation) % 24;
+        let prospectEnd = (repEnd + relation) % 24;
+
+        overlapHours.innerHTML = `Overlapping business hours: ${formatHour(repStart)}–${formatHour(repEnd)} <span class="arrow">↔</span> ${formatHour(prospectStart)}–${formatHour(prospectEnd)}`;
     }
+
+    function formatTime(date, military) {
+        if (military) {
+            return date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
+        }
+        return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+    }
+
+    function formatHour(hour) {
+        const h = Math.floor(hour);
+        const m = Math.round((hour - h) * 60);
+        const date = new Date();
+        date.setHours(h, m);
+        return formatTime(date, militaryTime);
+    }
+
+    repSlider.addEventListener("input", updateTimes);
+    prospectSlider.addEventListener("input", updateTimes);
+    repSelect.addEventListener("change", updateTimes);
+    prospectTimezoneSelect.addEventListener("change", updateTimes);
+    toggleMilitaryBtn.addEventListener("click", () => {
+        militaryTime = !militaryTime;
+        updateTimes();
+    });
+
     updateTimes();
-  });
-
-  function formatTime(minutes, tz, military) {
-    let dt = new Date();
-    dt.setUTCHours(0, minutes);
-    let opts = military ? {hour: "2-digit", minute: "2-digit", hour12: false, timeZone: tz}
-                        : {hour: "numeric", minute: "2-digit", hour12: true, timeZone: tz};
-    return new Intl.DateTimeFormat("en-US", opts).format(dt);
-  }
-
-  function updateTimes() {
-    const repMinutes = parseInt(repSlider.value);
-    const pTZ = prospectTZ.value || Object.values(countries)[0][0];
-    repTimeDisplay.textContent = formatTime(repMinutes, repTZ.value, false);
-    prospectTimeDisplay.textContent = formatTime(repMinutes, pTZ, military);
-
-    // difference
-    let now = new Date();
-    let repOffset = new Date(now.toLocaleString("en-US", {timeZone: repTZ.value})).getTime() - now.getTime();
-    let pOffset = new Date(now.toLocaleString("en-US", {timeZone: pTZ})).getTime() - now.getTime();
-    let diffHrs = Math.round((pOffset - repOffset) / 3600000);
-    currentDiff.textContent = `(Selected Timezone) is ${diffHrs} hours ${diffHrs >= 0 ? "ahead" : "behind"} ${repTZ.options[repTZ.selectedIndex].text}`;
-
-    // overlap
-    let repStart = 9 * 60;
-    let repEnd = 17 * 60;
-    let prospectStart = repStart - diffHrs * 60;
-    let prospectEnd = repEnd - diffHrs * 60;
-    overlap.innerHTML = `<span class="green">Overlapping business hours:</span> ${formatTime(repStart, repTZ.value, false)}–${formatTime(repEnd, repTZ.value, false)} ↔ ${formatTime(prospectStart, pTZ, military)}–${formatTime(prospectEnd, pTZ, military)}`;
-  }
-
-  repSlider.addEventListener("input", e => {
-    prospectSlider.value = e.target.value;
-    updateTimes();
-  });
-  prospectSlider.addEventListener("input", e => {
-    repSlider.value = e.target.value;
-    updateTimes();
-  });
-  repTZ.addEventListener("change", updateTimes);
-  prospectTZ.addEventListener("change", updateTimes);
-  toggleMilitary.addEventListener("click", () => {
-    military = !military;
-    updateTimes();
-  });
-
-  updateTimes();
 </script>
 </body>
 </html>
